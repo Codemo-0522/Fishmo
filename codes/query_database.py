@@ -14,7 +14,8 @@ def save_video_config(video_base, thumbnail_base):
         if not os.path.exists(video_base):
             return {'status': 'error', 'message': '视频根路径不存在'}
         if not os.path.exists(thumbnail_base):
-            return {'status': 'error', 'message': '缩略图根路径不存在'}
+            os.mkdir(thumbnail_base)
+            # return {'status': 'error', 'message': '缩略图根路径不存在'}
             
         # 更新配置
         sql = """
@@ -71,7 +72,7 @@ def get_video_config():
                 if result:
                     print(f"返回视频一级路径：{result[0]} 返回缩略图一级路径：{result[1]}")
                     return {'video_base': result[0], 'thumbnail_base': result[1]}
-                return None
+                return {'video_base': "", 'thumbnail_base': ""}
     except Exception as e:
         print(f'获取视频配置异常：{str(e)}')
         return None
@@ -120,3 +121,151 @@ def get_user_by_id(user_id):
     except Exception as e:
         print(f'用户查询异常：{str(e)}')
         return None
+
+# 获取所有视频信息
+def get_all_videos():
+    """
+    获取所有视频信息
+    :return: list[dict] 包含视频信息的字典列表
+    """
+    try:
+        with db.connect() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("""
+                    SELECT video_path, video_name 
+                    FROM video_info 
+                    ORDER BY video_path
+                """)
+                results = cursor.fetchall()
+                if results:
+                    # 将查询结果转换为字典列表
+                    videos = []
+                    for row in results:
+                        videos.append({
+                            'video_path': row[0],
+                            'video_name': row[1]
+                        })
+                    return videos
+                return []
+    except Exception as e:
+        print(f'获取视频信息异常：{str(e)}')
+        return []
+
+def get_videos_paginated(page=1, per_page=20, category=''):
+    """
+    获取分页的视频列表
+    
+    Args:
+        page: 当前页码（从1开始）
+        per_page: 每页显示数量
+        category: 分类名称（可选）
+    
+    Returns:
+        tuple: (总数量, 视频列表)
+    """
+    try:
+        with db.connect() as conn:
+            with conn.cursor() as cursor:
+                # 构建基础查询
+                base_query = "FROM video_info"
+                count_query = "SELECT COUNT(*) " + base_query
+                data_query = "SELECT id, category, video_path, video_name " + base_query
+                
+                # 如果指定了分类，添加WHERE条件
+                params = []
+                if category:
+                    count_query += " WHERE category = %s"
+                    data_query += " WHERE category = %s"
+                    params.append(category)
+                
+                # 获取总数
+                cursor.execute(count_query, params)
+                total_count = cursor.fetchone()[0]
+                
+                # 添加分页
+                data_query += " ORDER BY id DESC LIMIT %s OFFSET %s"
+                offset = (page - 1) * per_page
+                params.extend([per_page, offset])
+                
+                # 获取数据
+                cursor.execute(data_query, params)
+                videos = []
+                for row in cursor.fetchall():
+                    videos.append({
+                        'id': row[0],
+                        'category': row[1],
+                        'video_path': row[2],
+                        'video_name': row[3]
+                    })
+                
+                return total_count, videos
+                
+    except Exception as e:
+        print(f"获取分页视频列表失败: {str(e)}")
+        raise
+
+def get_video_categories():
+    """获取所有视频分类"""
+    try:
+        with db.connect() as conn:
+            with conn.cursor() as cursor:
+                # 获取所有不重复的分类
+                cursor.execute("""
+                    SELECT DISTINCT category, COUNT(*) as video_count 
+                    FROM video_info 
+                    GROUP BY category 
+                    ORDER BY video_count DESC
+                """)
+                
+                categories = []
+                for row in cursor.fetchall():
+                    categories.append({
+                        'name': row[0],
+                        'count': row[1]
+                    })
+                
+                return categories
+                
+    except Exception as e:
+        print(f"获取视频分类失败: {str(e)}")
+        raise
+
+def search_videos_by_name(keyword):
+    """
+    按名称搜索视频
+    
+    Args:
+        keyword: 搜索关键词
+    
+    Returns:
+        list: 符合条件的视频列表
+    """
+    try:
+        with db.connect() as conn:
+            with conn.cursor() as cursor:
+                # 构建模糊查询
+                search_query = """
+                    SELECT id, category, video_path, video_name 
+                    FROM video_info 
+                    WHERE video_name LIKE %s 
+                    ORDER BY id DESC
+                """
+                search_pattern = f'%{keyword}%'
+                
+                # 执行查询
+                cursor.execute(search_query, (search_pattern,))
+                
+                videos = []
+                for row in cursor.fetchall():
+                    videos.append({
+                        'id': row[0],
+                        'category': row[1],
+                        'video_path': row[2],
+                        'video_name': row[3]
+                    })
+                
+                return videos
+                
+    except Exception as e:
+        print(f"搜索视频失败: {str(e)}")
+        raise

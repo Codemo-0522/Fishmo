@@ -767,3 +767,58 @@ button:disabled {
         padding: 10px 20px;
     }
 }
+
+/* 进度条容器样式 */
+.progress-container {
+    margin: 20px 0;
+    display: none;  /* 默认隐藏 */
+}
+
+.progress-container.active {
+    display: block;
+    animation: fadeIn 0.3s ease;
+}
+
+.progress-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.progress-bar {
+    height: 6px;
+    background: var(--border-color);
+    border-radius: var(--border-radius-full);
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-inner {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--purple-color));
+    width: 0;
+    transition: width 0.3s ease;
+    border-radius: var(--border-radius-full);
+}
+
+/* 进度条动画 */
+@keyframes progress-glow {
+    0% {
+        box-shadow: 0 0 5px rgba(99, 102, 241, 0.2);
+    }
+    50% {
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.4);
+    }
+    100% {
+        box-shadow: 0 0 5px rgba(99, 102, 241, 0.2);
+    }
+}
+
+.progress-bar-inner.active {
+    animation: progress-glow 2s infinite;
+}

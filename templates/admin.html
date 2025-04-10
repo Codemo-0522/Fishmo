@@ -53,29 +53,39 @@
                         <h3>基础路径配置</h3>
                         <div class="config-item">
                             <label>视频根路径：</label>
-                            <input type="text" id="videoBase" value="E:\media\Video_player_resource">
+                            <input type="text" id="videoBase">
                         </div>
                         <div class="config-item">
                             <label>缩略图根路径：</label>
-                            <input type="text" id="thumbnailBase" value="C:\Users\Administrator\Desktop\test_img">
+                            <input type="text" id="thumbnailBase">
                         </div>
                         <button class="save-btn">保存配置</button>
                     </div>
 
                     <!-- 扫描操作区域 -->
                     <div class="scan-section">
-                        <h3>资源扫描</h3>
-                        <div class="scan-controls">
-                            <div class="config-item">
-                                <label>扫描目录：</label>
-                                <input type="text" id="scanDir" value="E:\media\Video_player_resource">
+                        <h3>扫描操作</h3>
+                        <div class="config-item">
+                            <label>扫描目录：</label>
+                            <input type="text" id="scanDir">
+                        </div>
+                        <div class="button-group">
+                            <button class="scan-btn">扫描视频</button>
+                            <button class="scan-thumb-btn">生成所有缩略图</button>
+                        </div>
+                        <!-- 添加进度条容器 -->
+                        <div class="progress-container">
+                            <div class="progress-info">
+                                <span class="progress-text">准备就绪</span>
+                                <span class="progress-percentage">0%</span>
                             </div>
-                            <div class="button-group">
-                                <button class="scan-btn">扫描视频</button>
-                                <button class="scan-thumb-btn">扫描缩略图</button>
+                            <div class="progress-bar">
+                                <div class="progress-bar-inner"></div>
                             </div>
                         </div>
-                        <div id="scanProgress" class="scan-progress"></div>
+                        <div id="scanProgress" class="scan-progress">
+                            <div class="placeholder-text">扫描结果将在这里显示</div>
+                        </div>
                     </div>
                 </div>
 

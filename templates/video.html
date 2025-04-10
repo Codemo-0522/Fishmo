@@ -5,61 +5,111 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>视频中心</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/video.css') }}">
+    <link rel="stylesheet" href="/static/css/video.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body>
-    <div id="APP">
+<body data-theme="dark">
+    <div class="video-container">
+        <!-- 视频播放器（初始隐藏） -->
         <div class="video-player-container hidden">
             <div class="video-player">
-                <video id="videoPlayer" controls></video>
+                <video id="videoPlayer" controls>
+                    <source src="" type="video/mp4">
+                    您的浏览器不支持视频播放。
+                </video>
+            </div>
+            <div class="video-info-panel">
+                <h2>请选择视频</h2>
+                <p>点击下方视频卡片开始播放</p>
             </div>
         </div>
 
-        <div class="controls-container">
+        <!-- 搜索和分类区域 -->
+        <div class="search-category-container">
             <div class="search-box">
-                <input type="text" id="searchInput" placeholder="输入视频名称搜索...">
-                <button id="searchButton">搜索</button>
+                <input type="text" id="searchInput" placeholder="搜索视频...">
+                <button id="searchButton">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
             </div>
 
             <div class="video-categories">
-                <div class="category active" data-category="all">全部</div>
-                {% for category in video_data %}
-                    <div class="category" data-category="{{ category }}">{{ category }}</div>
-                {% endfor %}
+                <div class="category-header">
+                    <span>视频分类</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="categories-list">
+                    <!-- 分类将通过JavaScript动态加载 -->
+                </div>
             </div>
         </div>
 
+        <!-- 视频网格 -->
         <div class="video-grid-container">
-            {% for category, folders in video_data.items() %}
-                {% for folder_path, videos in folders.items() %}
-                    <div class="folder-grid" data-category="{{ category }}">
-                        <h3 class="folder-title">{{ folder_path }}</h3>
-                        <div class="video-grid">
-                            {% for video in videos %}
-                                <div class="video-card" data-path="{{ video.path }}">
-                                    <div class="thumbnail-container">
-                                        <img class="video-thumbnail"
-                                             data-src="{{ url_for('serve_thumbnail', path=video.thumb_rel) }}"
-                                             data-default="{{ default_thumb }}"
-                                             src="{{ default_thumb }}"
-                                             alt="{{ video.name }}"
-                                             onerror="this.onerror=null;this.src='{{ default_thumb }}'">
-                                        <div class="play-button">▶</div>
-                                    </div>
-                                    <div class="video-title">{{ video.name }}</div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                {% endfor %}
-            {% endfor %}
+            <div class="video-grid">
+                <!-- 视频卡片将通过JavaScript动态加载 -->
+            </div>
         </div>
 
-        <div class="search-results-container hidden">
-            <div class="search-results"></div>
+        <!-- 搜索结果容器 -->
+        <div class="search-results-container" style="display: none;">
+            <h3>搜索结果</h3>
+            <div class="search-results">
+                <!-- 搜索结果将通过JavaScript动态加载 -->
+            </div>
+        </div>
+
+        <!-- 分页控件 -->
+        <div class="pagination-container">
+            <div class="pagination-controls">
+                <button id="prevPage" onclick="prevPage()">上一页</button>
+                <div class="page-numbers"></div>
+                <button id="nextPage" onclick="nextPage()">下一页</button>
+            </div>
+            <div class="pagination-info"></div>
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='js/video.js') }}"></script>
+    <!-- 深色模式切换按钮 -->
+    <div class="theme-toggle" onclick="toggleTheme()">
+        <i class="fas fa-sun"></i>
+    </div>
+
+    <script src="/static/js/video.js"></script>
+    <script>
+        // 深色模式切换
+        function toggleTheme() {
+            const body = document.body;
+            const currentTheme = body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            
+            // 更新图标
+            const icon = document.querySelector('.theme-toggle i');
+            icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+        }
+
+        // 初始化主题和UI
+        document.addEventListener('DOMContentLoaded', () => {
+            // 强制使用深色模式
+            document.body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+            
+            // 设置初始图标
+            const icon = document.querySelector('.theme-toggle i');
+            icon.className = 'fas fa-sun';
+            
+            // 分类折叠功能
+            const categoryHeader = document.querySelector('.category-header');
+            const categoriesList = document.querySelector('.categories-list');
+            
+            categoryHeader.addEventListener('click', () => {
+                categoryHeader.classList.toggle('collapsed');
+                categoriesList.classList.toggle('collapsed');
+            });
+        });
+    </script>
 </body>
 </html>

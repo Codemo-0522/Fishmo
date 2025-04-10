@@ -5,30 +5,46 @@ from codes import config, query_database
 import tkinter as tk
 from tkinter import filedialog
 
-def generate_thumbnail(video_fullpath, thumbnail_fullpath):
-    """生成视频缩略图（带自动创建目录功能）
-    video_fullpath ： 视频完整路径
-    thumbnail_fullpath : 缩略图完整路径
-    缩略图包含文件名，所有需要在外部处理（获取缩略图文件名）
+def generate_thumbnail(video_path, thumbnail_path):
+    print(f"开始生成缩略图 视频路径：{video_path}   缩略图路径：{thumbnail_path}")
+    """
+    生成视频缩略图
+    :param video_path: 视频完整路径
+    :param thumbnail_path: 缩略图保存路径
+    :return: bool 是否成功
     """
     try:
-        #创建缩略图所在目录，去除文件名后的目录
-        os.makedirs(os.path.dirname(thumbnail_fullpath), exist_ok=True)
-        subprocess.run([
-            config.ffmpeg_path,
-            "-ss", "00:00:00",  # 放在输入前加速定位
-            "-i", video_fullpath,
-            "-vframes", "1",
-            "-q:v", "2",
-            "-map", "0:v:0",  # 明确选择第一个视频流
-            "-vsync", "vfr",  # 防止时间戳警告
-            "-y",
-            thumbnail_fullpath
-        ], check=True, stderr=subprocess.PIPE,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+        try:
+            subprocess.run([
+                config.ffmpeg_path,
+                "-ss", "00:01:00",  # 从视频开始处截取
+                "-i", video_path,
+                "-vframes", "1",  # 只截取一帧
+                "-q:v", "2",  # 设置图片质量
+                "-map", "0:v:0",  # 选择第一个视频流
+                "-vsync", "vfr",  # 防止时间戳警告
+                "-y",  # 覆盖已存在的文件
+                thumbnail_path
+            ], check=True, stderr=subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            return True
+        except Exception as e:
+            subprocess.run([
+                config.ffmpeg_path,
+                "-ss", "00:00:09",  # 从视频开始处截取
+                "-i", video_path,
+                "-vframes", "1",  # 只截取一帧
+                "-q:v", "2",  # 设置图片质量
+                "-map", "0:v:0",  # 选择第一个视频流
+                "-vsync", "vfr",  # 防止时间戳警告
+                "-y",  # 覆盖已存在的文件
+                thumbnail_path
+            ], check=True, stderr=subprocess.PIPE,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0)
+            return True
     except Exception as e:
-        print(f"生成缩略图异常：{str(e)}")
-        raise
+        print(f"生成缩略图失败: {str(e)}")
+        return False
 
 def get_video_structure(app):
     """生成视频目录结构（不再生成缩略图）"""
@@ -96,53 +112,75 @@ def select_and_save_paths(app):
 #扫描视频写入数据库
 import os
 
-def scan_and_process_videos(app, parent_dir, video_base):
-    """确保每个子文件夹内的所有视频文件都被插入数据库"""
+def scan_and_process_videos(app, parent_dir, video_base, progress_callback=None):
+    """
+    扫描并处理视频文件
+    
+    Args:
+        app: Flask应用实例
+        parent_dir: 要扫描的目录
+        video_base: 视频根目录
+        progress_callback: 进度更新回调函数
+    """
     result = {
         'categories_added': 0,
         'videos_added': 0,
         'failed_count': 0
     }
-    print(f"扫描的视频父目录：{parent_dir}")
+    
+    try:
+        if not os.path.exists(parent_dir):
+            raise Exception('目录不存在')
 
-    # 支持的视频扩展名（按需补充）
-    VIDEO_EXTENSIONS = {'.mp4', '.avi', '.mkv', '.mov', '.flv'}
+        # 支持的视频扩展名
+        VIDEO_EXTENSIONS = {'.mp4', '.avi', '.mkv', '.mov', '.flv'}
+        
+        # 记录有效分类（避免空目录）
+        valid_categories = set()
+        
+        # 首先收集所有视频文件以计算总数
+        video_files = []
+        for root, _, files in os.walk(parent_dir):
+            for filename in files:
+                file_ext = os.path.splitext(filename)[1].lower()
+                if file_ext in VIDEO_EXTENSIONS:
+                    video_files.append((root, filename))
 
-    # 记录有效分类（避免空目录）
-    valid_categories = set()
+        if not video_files:
+            raise Exception('未找到视频文件')
 
-    # 遍历所有子目录（包含深层嵌套）
-    for root, dirs, files in os.walk(parent_dir):
-        # 计算相对路径（关键点：排除父目录自身）
-        relative_path = os.path.relpath(root, parent_dir)
-        if relative_path == '.':
-            continue  # 跳过父目录层
-
-        # 关键修改点：分类名 = 当前文件夹名称（非完整路径）
-        category = os.path.basename(root)  # 如 parent_dir/v1/v2 的 category 是 v2
-
-        # 处理当前目录下的每个文件
-        for filename in files:
-            # 严格过滤视频文件
-            file_ext = os.path.splitext(filename)[1].lower()
-            if file_ext not in VIDEO_EXTENSIONS:
-                continue  # 跳过非视频文件
-
-            # 构建插入参数
-            video_name = filename  # 包含扩展名
-            video_path = relative_path.replace(os.path.sep, '/')  # 保持完整相对路径
-
+        total_files = len(video_files)
+        
+        # 处理每个视频文件
+        for index, (root, filename) in enumerate(video_files, 1):
             try:
-                # 调试输出（确认每个文件都被处理）
+                # 更新进度
+                if progress_callback:
+                    percentage = int((index / total_files) * 100)
+                    progress_callback(percentage, filename)
+
+                # 计算相对路径
+                relative_path = os.path.relpath(root, parent_dir)
+                if relative_path == '.':
+                    continue  # 跳过父目录层
+
+                # 分类名 = 当前文件夹名称
+                category = os.path.basename(root)
+                
+                # 构建插入参数
+                video_name = filename
+                video_path = relative_path.replace(os.path.sep, '/')
+
+                # 调试输出
                 print(f"正在插入：分类[{category}] 文件名[{video_name}] 路径[{video_path}]")
 
-                # 执行数据库插入（示例方法）
+                # 执行数据库插入
                 query_database.insert_video_info(
                     category=category,
                     video_path=video_path,
                     video_name=video_name
                 )
-
+                
                 # 更新统计结果
                 valid_categories.add(category)
                 result['videos_added'] += 1
@@ -150,11 +188,16 @@ def scan_and_process_videos(app, parent_dir, video_base):
             except Exception as e:
                 print(f"插入失败：{os.path.join(root, filename)} | 错误：{str(e)}")
                 result['failed_count'] += 1
+                continue
 
-    # 最终统计有效分类数
-    result['categories_added'] = len(valid_categories)
-    print(f"数据插入成功，返回结果：{result}")
-    return result
+        # 最终统计有效分类数
+        result['categories_added'] = len(valid_categories)
+        print(f"数据插入成功，返回结果：{result}")
+        return result
+
+    except Exception as e:
+        print(f"扫描视频时发生错误: {str(e)}")
+        raise
 
 
 def get_app_secret_key():

@@ -87,10 +87,8 @@ document.addEventListener('DOMContentLoaded', function() {
         handleScan('video');
     });
 
-    // 扫描缩略图按钮点击事件
-    scanThumbBtn.addEventListener('click', function() {
-        handleScan('thumbnail');
-    });
+    // 生成缩略图按钮点击事件
+    scanThumbBtn.addEventListener('click', generateAllThumbnails);
 
     // 处理扫描操作
     function handleScan(type) {
@@ -110,6 +108,24 @@ document.addEventListener('DOMContentLoaded', function() {
         btn.textContent = '扫描中...';
         scanProgress.textContent = `正在扫描${actionText}，请稍候...`;
 
+        // 显示并重置进度条
+        progressController.reset();
+        progressController.show();
+
+        // 创建用于取消请求的 signal
+        const signal = progressController.createAbortController();
+
+        // 创建 EventSource 获取实时进度
+        const eventSource = new EventSource(`/api/scan-${type}s-progress`);
+        
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            progressController.updateProgress(
+                data.percentage,
+                `正在扫描: ${data.current_file || ''}`
+            );
+        };
+
         // 发送扫描请求
         fetch(`/api/scan-${type}s`, {
             method: 'POST',
@@ -118,11 +134,13 @@ document.addEventListener('DOMContentLoaded', function() {
             },
             body: JSON.stringify({
                 parentDir: parentDir
-            })
+            }),
+            signal
         })
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                progressController.updateProgress(100, '扫描完成！');
                 scanProgress.innerHTML = `
                     扫描完成！<br>
                     新增分类：${data.categories_added || 0}<br>
@@ -133,11 +151,16 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            scanProgress.textContent = `扫描失败：${error.message}`;
-            showError(`${actionText}扫描失败：${error.message}`);
+            if (error.name === 'AbortError') {
+                scanProgress.textContent = '扫描已取消';
+                showError('扫描已取消');
+            } else {
+                scanProgress.textContent = `扫描失败：${error.message}`;
+                showError(`${actionText}扫描失败：${error.message}`);
+            }
         })
         .finally(() => {
-            // 恢复按钮状态
+            progressController.hide();
             btn.disabled = false;
             btn.textContent = `扫描${actionText}`;
         });
@@ -252,5 +275,133 @@ async function handleLogout() {
         }
     } catch (error) {
         showError('退出失败：' + error.message);
+    }
+}
+
+// 进度条控制器
+class ProgressController {
+    constructor() {
+        this.container = document.querySelector('.progress-container');
+        this.progressBar = this.container.querySelector('.progress-bar-inner');
+        this.progressText = this.container.querySelector('.progress-text');
+        this.progressPercentage = this.container.querySelector('.progress-percentage');
+        this.abortController = null;
+    }
+
+    show() {
+        this.container.classList.add('active');
+        this.progressBar.classList.add('active');
+    }
+
+    hide() {
+        this.container.classList.remove('active');
+        this.progressBar.classList.remove('active');
+    }
+
+    reset() {
+        this.updateProgress(0, '准备就绪');
+    }
+
+    updateProgress(percentage, text) {
+        this.progressBar.style.width = `${percentage}%`;
+        this.progressPercentage.textContent = `${percentage}%`;
+        if (text) {
+            this.progressText.textContent = text;
+        }
+    }
+
+    createAbortController() {
+        this.abortController = new AbortController();
+        return this.abortController.signal;
+    }
+
+    abort() {
+        if (this.abortController) {
+            this.abortController.abort();
+            this.abortController = null;
+        }
+    }
+}
+
+// 创建进度条控制器实例
+const progressController = new ProgressController();
+
+// 修改生成缩略图函数
+async function generateAllThumbnails() {
+    const progressArea = document.getElementById('scanProgress');
+    const generateBtn = document.querySelector('.scan-thumb-btn');
+    
+    try {
+        generateBtn.disabled = true;
+        generateBtn.textContent = '正在生成缩略图...';
+        progressArea.textContent = '开始生成缩略图...\n';
+        
+        // 显示并重置进度条
+        progressController.reset();
+        progressController.show();
+
+        // 创建 EventSource 获取实时进度
+        const eventSource = new EventSource('/api/generate-thumbnails-progress');
+        
+        eventSource.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            progressController.updateProgress(
+                data.percentage,
+                `正在处理: ${data.current_file || ''}`
+            );
+        };
+
+        const response = await fetch('/api/generate-all-thumbnails', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        eventSource.close();
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/json')) {
+            throw new Error('服务器返回了非JSON格式的数据');
+        }
+        
+        const data = await response.json();
+        
+        if (data.status === 'success') {
+            progressController.updateProgress(100, '生成完成！');
+            const result = data.data;
+            let message = `缩略图生成完成！\n`;
+            message += `总计视频数：${result.total}\n`;
+            message += `成功生成：${result.success_count}\n`;
+            message += `失败数量：${result.failed_count}\n`;
+            
+            if (result.failed_videos && result.failed_videos.length > 0) {
+                message += '\n失败的视频：\n';
+                result.failed_videos.forEach(video => {
+                    message += `- ${video}\n`;
+                });
+            }
+            
+            progressArea.textContent = message;
+            showSuccess('缩略图生成完成');
+        } else {
+            throw new Error(data.message || '生成缩略图失败');
+        }
+    } catch (error) {
+        console.error('生成缩略图错误:', error);
+        progressArea.textContent = `发生错误：${error.message}`;
+        showError('生成缩略图时发生错误：' + error.message);
+    } finally {
+        progressController.hide();
+        generateBtn.disabled = false;
+        generateBtn.textContent = '生成所有缩略图';
     }
 }
