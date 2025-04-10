@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fishmo</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+</head>
+<body>
+    <!-- Top栏 -->
+    <div class="top-bar">
+        <div class="logo-other-div">
+            <!--Logo区域-->
+            <div class="logo-div">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Fishmo" class="logo">
+                <span class="brand-name">Fishmo</span>
+            </div>
+            <!--内容区域-->
+        </div>
+        <!--Logo区域-->
+        <div class="login-signin-div">
+            <div class="left-bar">
+                <div class="left-bar-button">≡</div>
+            </div>
+            <button class="login">神识归位</button>
+            <button class="signin">灵契缔结</button>
+            <!-- 新增用户信息展示 -->
+            <div class="user-info">
+                <button class="logout-btn" onclick="handleLogout()">闭关</button>
+                <span class="home-btn">洞府</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 页面结构 -->
+    <div class="main-container">
+        <!-- 左侧导航栏 -->
+        <div class="left-navbar-div">
+            <div class="nav-parent active">
+                <div class="nav-parent-header">天机阁</div>
+                <div class="nav-sub">
+                    <a class="nav-sub-item" target="_blank" href="{{ url_for('video_page')}}">流光镜</a>
+                    <a class="nav-sub-item" target="_blank" href="{{ url_for('image_page')}}">凝真玉简</a>
+                    <a class="nav-sub-item" target="_blank" href="{{ url_for('audio_page')}}">回响心铃</a>
+                </div>
+            </div>
+            <div class="nav-parent">
+                <div class="nav-parent-header">万法枢机</div>
+                <div class="nav-sub">
+                    <div class="nav-sub-item">巡天星轨</div>
+                    <div class="nav-sub-item">分光掠影术</div>
+                </div>
+            </div>
+            <div class="nav-parent">
+                <div class="nav-parent-header">道衍真灵</div>
+                <div class="nav-sub">
+                    <div class="nav-sub-item">开元问道崖</div>
+                    <div class="nav-sub-item">归墟玄览</div>
+                    <div class="nav-sub-item">太初劫尽相</div>
+                </div>
+            </div>
+
+        </div>
+        <!--================================================================-->
+        <div class="content">
+    <div class="intro-container">
+        <!-- 仙途启程 -->
+        <section class="hero-section">
+            <div class="hero-text">
+                <h1 class="gradient-heading">吾辈修士，何惧逆天！不过是些许风霜罢了</h1>
+                <p class="hero-subtitle">三十年河东 三十年河西 莫欺少年穷</p>
+                <button class="cta-button">缔结灵契 踏入修行大道</button>
+            </div>
+            <div class="hero-visual">
+                <div class="glowing-orb"></div>
+                <div class="hero-container">
+                    <img src="{{ url_for('static', filename='images/img1.png') }}" alt="仙途幻境" class="hero-image">
+                </div>
+            </div>
+        </section>
+        <!--逐字显示文本-->
+        <div class="card">
+          <h2>--</h2>
+          <div class="typing-container">
+            <span id="text" class="typing-text"></span>
+            <span class="cursor">|</span>
+          </div>
+        </div>
+
+        <!-- 修仙境界 -->
+        <section class="cultivation-grid">
+            <div class="realm-card">
+                <div class="realm-icon">🌱</div>
+                <h3>炼气境</h3>
+                <p>引气入体，周天循环</p>
+                <div class="hover-line"></div>
+            </div>
+            <div class="realm-card">
+                <div class="realm-icon">💪</div>
+                <h3>筑基境</h3>
+                <p>道基初成，脱胎换骨</p>
+                <div class="hover-line"></div>
+            </div>
+            <div class="realm-card">
+                <div class="realm-icon">🔥</div>
+                <h3>金丹境</h3>
+                <p>金丹九转，三昧真火</p>
+                <div class="hover-line"></div>
+            </div>
+            <div class="realm-card">
+                <div class="realm-icon">⚡</div>
+                <h3>元婴境</h3>
+                <p>元婴出窍，雷劫炼神</p>
+                <div class="hover-line"></div>
+            </div>
+            <div class="realm-card">
+                <div class="realm-icon">🌀</div>
+                <h3>化神境</h3>
+                <p>元神显化，法天象地</p>
+                <div class="hover-line"></div>
+            </div>
+            <div class="realm-card">
+                <div class="realm-icon">🌌</div>
+                <h3>合体境</h3>
+                <p>天人合一，身化虚空</p>
+                <div class="hover-line"></div>
+            </div>
+            <div class="realm-card">
+                <div class="realm-icon">✨</div>
+                <h3>大乘境</h3>
+                <p>大道共鸣，言出法随</p>
+                <div class="hover-line"></div>
+            </div>
+            <div class="realm-card">
+                <div class="realm-icon">💫</div>
+                <h3>渡劫境</h3>
+                <p>九九天劫，生死轮回</p>
+                <div class="hover-line"></div>
+            </div>
+            <div class="realm-card">
+                <div class="realm-icon">🌟</div>
+                <h3>真仙境</h3>
+                <p>仙光护体，与天同寿</p>
+                <div class="hover-line"></div>
+            </div>
+        </section>
+
+        <!-- 仙器宝库 -->
+        <section class="artifact-gallery">
+            <div class="artifact-card">
+                <img src="{{ url_for('static', filename='images/img3.png') }}" alt="轩辕剑" class="artifact-image">
+                <h4>轩辕剑</h4>
+                <p>斩妖除魔圣道剑，剑气纵横三万里</p>
+            </div>
+            <div class="artifact-card">
+                <img src="{{ url_for('static', filename='images/img5.png') }}" alt="昆仑镜" class="artifact-image">
+                <h4>昆仑镜</h4>
+                <p>照见前世今生缘，逆转时空改命盘</p>
+            </div>
+            <div class="artifact-card">
+                <img src="{{ url_for('static', filename='images/img9.png') }}" alt="炼妖壶" class="artifact-image">
+                <h4>炼妖壶</h4>
+                <p>收尽天下妖魔魂，炼作仙丹助修行</p>
+            </div>
+        </section>
+
+        <!-- 仙法玄妙 -->
+        <section class="spell-showcase">
+            <div class="spell-card">
+                <div class="spell-icon">🗡️</div>
+                <h3>御剑术</h3>
+                <p>千里之外取敌首级，万剑归宗破苍穹</p>
+                <div class="spell-effect"></div>
+            </div>
+            <div class="spell-card">
+                <div class="spell-icon">🔮</div>
+                <h3>天机术</h3>
+                <p>窥探天机改命数，逆转乾坤定生死</p>
+                <div class="spell-effect"></div>
+            </div>
+            <div class="spell-card">
+                <div class="spell-icon">💊</div>
+                <h3>炼丹术</h3>
+                <p>九转仙丹医白骨，长生不老驻仙颜</p>
+                <div class="spell-effect"></div>
+            </div>
+        </section>
+
+        <!-- 宗门排行 -->
+        <section class="sect-ranking">
+            <h2 class="section-title">修真界势力榜</h2>
+            <div class="ranking-card">
+                <div class="rank-number">1</div>
+                <h4>蜀山剑派</h4>
+                <p>剑指苍穹三千年，万剑归宗第一门</p>
+            </div>
+            <div class="ranking-card">
+                <div class="rank-number">2</div>
+                <h4>蓬莱仙岛</h4>
+                <p>海外仙山藏古木，御风之术冠九州</p>
+            </div>
+            <div class="ranking-card">
+                <div class="rank-number">3</div>
+                <h4>幽冥鬼宗</h4>
+                <p>幽冥鬼道驭万魂，血河滔天噬生灵</p>
+            </div>
+        </section>
+
+        <!-- 修仙冷知识 -->
+        <section class="lore-panel">
+            <h2 class="section-title">修真界冷笑话</h2>
+            <div class="joke-card">
+                <div class="joke-content">
+                    <p>🤣 问：为什么剑修从不迷路？</p>
+                    <p class="joke-answer">答：因为剑意所指即是方向！</p>
+                </div>
+            </div>
+            <div class="joke-card">
+                <div class="joke-content">
+                    <p>🤣 问：最惨的渡劫方式？</p>
+                    <p class="joke-answer">答：在雷雨天放风筝！</p>
+                </div>
+            </div>
+        </section>
+    </div>
+</div>
+        <!--====================================================================-->
+    </div>
+<!--    ===============================================================================-->
+    <!-- 登录注册弹窗 -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-content">
+            <div class="auth-tabs">
+                <div class="auth-tab active" data-tab="login" onclick="switchTab('login')">神识归位</div>
+                <div class="auth-tab" data-tab="register" onclick="switchTab('register')">灵契缔结</div>
+            </div>
+
+            <!-- 登录表单 -->
+            <div class="auth-form" id="loginForm">
+                <input type="text" placeholder="请输入本命印记" id="loginAccount" value="admin">
+                <input type="password" placeholder="请输入本命密钥" id="loginPassword" value="123456">
+                <button class="auth-btn" onclick="handleLogin()">即刻归位</button>
+            </div>
+
+            <!-- 注册表单 -->
+            <div class="auth-form" id="registerForm" style="display: none;">
+                <input type="text" placeholder="请输入本命印记" id="registerAccount">
+                <input type="password" placeholder="请输入本命密钥" id="registerPassword">
+                <input type="password" placeholder="请再次输入本命密钥" id="registerConfirm">
+                <button class="auth-btn" onclick="handleRegister()">开始缔结</button>
+            </div>
+        </div>
+    </div>
+
+<!--    ========================================================================================-->
+<!--    消息弹窗-->
+    <div id="toastContainer" class="toast-container"></div>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
+</body>
+</html>
+

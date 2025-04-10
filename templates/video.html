@@ -1,0 +1,65 @@
+<!-- templates/video.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频中心</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/video.css') }}">
+</head>
+<body>
+    <div id="APP">
+        <div class="video-player-container hidden">
+            <div class="video-player">
+                <video id="videoPlayer" controls></video>
+            </div>
+        </div>
+
+        <div class="controls-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="输入视频名称搜索...">
+                <button id="searchButton">搜索</button>
+            </div>
+
+            <div class="video-categories">
+                <div class="category active" data-category="all">全部</div>
+                {% for category in video_data %}
+                    <div class="category" data-category="{{ category }}">{{ category }}</div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="video-grid-container">
+            {% for category, folders in video_data.items() %}
+                {% for folder_path, videos in folders.items() %}
+                    <div class="folder-grid" data-category="{{ category }}">
+                        <h3 class="folder-title">{{ folder_path }}</h3>
+                        <div class="video-grid">
+                            {% for video in videos %}
+                                <div class="video-card" data-path="{{ video.path }}">
+                                    <div class="thumbnail-container">
+                                        <img class="video-thumbnail"
+                                             data-src="{{ url_for('serve_thumbnail', path=video.thumb_rel) }}"
+                                             data-default="{{ default_thumb }}"
+                                             src="{{ default_thumb }}"
+                                             alt="{{ video.name }}"
+                                             onerror="this.onerror=null;this.src='{{ default_thumb }}'">
+                                        <div class="play-button">▶</div>
+                                    </div>
+                                    <div class="video-title">{{ video.name }}</div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+        </div>
+
+        <div class="search-results-container hidden">
+            <div class="search-results"></div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/video.js') }}"></script>
+</body>
+</html>

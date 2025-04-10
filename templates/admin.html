@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>资源管理后台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+</head>
+<body>
+    <div class="admin-layout">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>资源管理</h2>
+                <button class="toggle-sidebar" onclick="toggleSidebar()">
+                    <span class="toggle-icon">◀</span>
+                </button>
+            </div>
+            <div class="nav-items">
+                <div class="nav-item active" onclick="switchSection('video-section')">
+                    <span class="nav-icon">🎥</span>
+                    <span class="nav-text">视频管理</span>
+                </div>
+                <div class="nav-item" onclick="switchSection('image-section')">
+                    <span class="nav-icon">🖼️</span>
+                    <span class="nav-text">图片管理</span>
+                </div>
+                <div class="nav-item" onclick="switchSection('audio-section')">
+                    <span class="nav-icon">🎵</span>
+                    <span class="nav-text">音频管理</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 顶部用户信息栏 -->
+            <div class="top-bar">
+                <div class="user-info">
+                    <span class="user-icon">👤</span>
+                    <span class="user-name">{{ session.get('user_account', 'admin') }}</span>
+                    <button class="logout-btn" onclick="handleLogout()">退出登录</button>
+                </div>
+            </div>
+
+            <div class="content-sections">
+                <!-- 视频管理区域 -->
+                <div id="video-section" class="section-content active">
+                    <div class="section-header">
+                        <h2>视频资源管理</h2>
+                    </div>
+                    <!-- 配置区域 -->
+                    <div class="config-section">
+                        <h3>基础路径配置</h3>
+                        <div class="config-item">
+                            <label>视频根路径：</label>
+                            <input type="text" id="videoBase" value="E:\media\Video_player_resource">
+                        </div>
+                        <div class="config-item">
+                            <label>缩略图根路径：</label>
+                            <input type="text" id="thumbnailBase" value="C:\Users\Administrator\Desktop\test_img">
+                        </div>
+                        <button class="save-btn">保存配置</button>
+                    </div>
+
+                    <!-- 扫描操作区域 -->
+                    <div class="scan-section">
+                        <h3>资源扫描</h3>
+                        <div class="scan-controls">
+                            <div class="config-item">
+                                <label>扫描目录：</label>
+                                <input type="text" id="scanDir" value="E:\media\Video_player_resource">
+                            </div>
+                            <div class="button-group">
+                                <button class="scan-btn">扫描视频</button>
+                                <button class="scan-thumb-btn">扫描缩略图</button>
+                            </div>
+                        </div>
+                        <div id="scanProgress" class="scan-progress"></div>
+                    </div>
+                </div>
+
+                <!-- 图片管理区域 -->
+                <div id="image-section" class="section-content">
+                    <div class="section-header">
+                        <h2>图片资源管理</h2>
+                    </div>
+                    <div class="placeholder-text">图片管理功能开发中...</div>
+                </div>
+
+                <!-- 音频管理区域 -->
+                <div id="audio-section" class="section-content">
+                    <div class="section-header">
+                        <h2>音频资源管理</h2>
+                    </div>
+                    <div class="placeholder-text">音频管理功能开发中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+</body>
+</html>
