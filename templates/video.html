@@ -4,12 +4,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>视频中心</title>
+    <title>流光镜</title>
     <link rel="stylesheet" href="/static/css/video.css">
+    <link rel="stylesheet" href="/static/css/navbar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-<body data-theme="dark">
+<body>
     <div class="video-container">
+        <!-- 导入通用导航栏 -->
+        {% include 'common/navbar.html' %}
         <!-- 视频播放器（初始隐藏） -->
         <div class="video-player-container hidden">
             <div class="video-player">
@@ -63,52 +66,38 @@
         <!-- 分页控件 -->
         <div class="pagination-container">
             <div class="pagination-controls">
-                <button id="prevPage" onclick="prevPage()">上一页</button>
-                <div class="page-numbers"></div>
-                <button id="nextPage" onclick="nextPage()">下一页</button>
+                <div class="page-navigation">
+                    <button id="prevPage" onclick="prevPage()">上一页</button>
+                    <div class="page-numbers"></div>
+                    <button id="nextPage" onclick="nextPage()">下一页</button>
+                </div>
+                <div class="page-jump">
+                    <span>跳至</span>
+                    <input type="number" id="pageInput" min="1" placeholder="页码">
+                    <button id="jumpButton">跳转</button>
+                </div>
             </div>
             <div class="pagination-info"></div>
         </div>
     </div>
 
-    <!-- 深色模式切换按钮 -->
-    <div class="theme-toggle" onclick="toggleTheme()">
-        <i class="fas fa-sun"></i>
-    </div>
 
+
+    <script src="/static/js/navbar.js"></script>
     <script src="/static/js/video.js"></script>
     <script>
-        // 深色模式切换
-        function toggleTheme() {
-            const body = document.body;
-            const currentTheme = body.getAttribute('data-theme');
-            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-            body.setAttribute('data-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            
-            // 更新图标
-            const icon = document.querySelector('.theme-toggle i');
-            icon.className = newTheme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
-        }
-
-        // 初始化主题和UI
+        // 初始化UI
         document.addEventListener('DOMContentLoaded', () => {
-            // 强制使用深色模式
-            document.body.setAttribute('data-theme', 'dark');
-            localStorage.setItem('theme', 'dark');
-            
-            // 设置初始图标
-            const icon = document.querySelector('.theme-toggle i');
-            icon.className = 'fas fa-sun';
-            
             // 分类折叠功能
             const categoryHeader = document.querySelector('.category-header');
             const categoriesList = document.querySelector('.categories-list');
             
-            categoryHeader.addEventListener('click', () => {
-                categoryHeader.classList.toggle('collapsed');
-                categoriesList.classList.toggle('collapsed');
-            });
+            if (categoryHeader && categoriesList) {
+                categoryHeader.addEventListener('click', () => {
+                    categoryHeader.classList.toggle('collapsed');
+                    categoriesList.classList.toggle('collapsed');
+                });
+            }
         });
     </script>
 </body>

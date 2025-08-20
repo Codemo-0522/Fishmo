@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>图集浏览 加载中...</title>
+    <link rel="stylesheet" href="/static/css/show_image.css">
+    <script>
+        // 将URL中的id参数转换为collection_id参数
+        window.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const id = urlParams.get('id');
+            if (id) {
+                // 设置一个隐藏字段来存储collection_id
+                const hiddenField = document.createElement('input');
+                hiddenField.type = 'hidden';
+                hiddenField.id = 'collection_id';
+                hiddenField.value = id;
+                document.body.appendChild(hiddenField);
+            }
+        });
+    </script>
+</head>
+<body>
+    <div class="images-container" id="imagesGrid">
+        <!-- 图片将通过JavaScript动态加载 -->
+        <div class="loading-message">加载中...</div>
+    </div>
+    
+    <!-- 分页导航 -->
+    <div class="pagination" id="pagination">
+        <button id="prevPage" class="pagination-button">上一页</button>
+        <div id="pageInfo" class="page-info">第 1 页 / 共 1 页</div>
+        <button id="nextPage" class="pagination-button">下一页</button>
+    </div>
+    
+    <!-- 子集列表 -->
+    <div class="subset-container">
+        <h3 class="subset-title">子集列表</h3>
+        <div class="subset-grid" id="subsetGrid"></div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/show_image.js') }}"></script>
+</body>
+</html>

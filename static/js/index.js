@@ -1,4 +1,3 @@
-
 //消息弹窗方法
 function showToast(message, type = 'info', duration = 2000) {
     const container = document.getElementById('toastContainer');
@@ -44,6 +43,163 @@ document.querySelector('.left-bar').addEventListener('click', function() {
 });
 
 //=====================================
+//注册登录组件文本逐个显示
+// 动画控制器
+const TextAnimator = (() => {
+    let currentAnim = null;
+    const observerMap = new WeakMap();
+
+    // 核心动画类
+    class TextAnimation {
+        constructor(container, text, options) {
+            this.container = container;
+            this.text = text;
+            this.options = {
+                interval: 200,
+                pauseDuration: 1000,
+                ...options
+            };
+            this.index = 0;
+            this.isRunning = false;
+            this.initStyles();
+            this.initObserver();
+        }
+
+        // 初始化样式
+        initStyles() {
+            this.styleTag = document.createElement('style');
+            this.styleTag.textContent = `
+                @keyframes text-appear {
+                    0% { opacity: 0; transform: translateY(5px); }
+                    100% { opacity: 1; transform: translateY(0); }
+                }
+                .anim-cursor {
+                    display: inline-block;
+                    animation: blink 1.2s infinite;
+                }
+                @keyframes blink {
+                    0%, 100% { opacity: 1; }
+                    50% { opacity: 0; }
+                }
+            `;
+            document.head.appendChild(this.styleTag);
+        }
+
+        // 初始化观察者
+        initObserver() {
+            if (observerMap.has(this.container)) return;
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        this.start();
+                    } else {
+                        this.stop();
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            observer.observe(this.container);
+            observerMap.set(this.container, observer);
+        }
+
+        // 开始动画
+        start() {
+            if (this.isRunning) return;
+            this.isRunning = true;
+            this.index = 0;
+            this.renderFrame();
+        }
+
+        // 渲染帧
+        renderFrame() {
+            if (!this.isRunning) return;
+
+            const visibleText = this.text.slice(0, this.index);
+            this.container.innerHTML = `
+                <span class="anim-text">${visibleText}</span>
+                <span class="anim-cursor">|</span>
+            `;
+
+            if (this.index < this.text.length) {
+                this.index++;
+                setTimeout(() => this.renderFrame(), this.options.interval);
+            } else {
+                setTimeout(() => this.reset(), this.options.pauseDuration);
+            }
+        }
+
+        // 重置动画
+        reset() {
+            this.container.innerHTML = '';
+            this.index = 0;
+            if (this.isRunning) {
+                setTimeout(() => this.renderFrame(), 300);
+            }
+        }
+
+        // 停止动画
+        stop() {
+            this.isRunning = false;
+            this.container.innerHTML = '';
+        }
+
+        // 销毁实例
+        destroy() {
+            this.stop();
+            if (this.styleTag) {
+                document.head.removeChild(this.styleTag);
+            }
+            const observer = observerMap.get(this.container);
+            if (observer) {
+                observer.disconnect();
+                observerMap.delete(this.container);
+            }
+        }
+    }
+
+    return {
+        create(selector, text, options) {
+            const container = document.querySelector(selector);
+            if (currentAnim) {
+                currentAnim.destroy();
+            }
+            currentAnim = new TextAnimation(container, text, options);
+            return currentAnim;
+        }
+    };
+})();
+
+// 增强版切换函数
+function switchTab(type) {
+    // 切换选项卡样式
+    document.querySelectorAll('.auth-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.tab === type);
+    });
+
+    // 切换表单显示
+    document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
+
+    // 配置动画参数
+    const config = {
+        login: {
+            text: '灵契归源，再入Fishmo秘境',
+            options: { interval: 150 }
+        },
+        register: {
+            text: '缔结灵契，探索Fishmo秘境',
+            options: { interval: 120 }
+        }
+    }[type];
+
+    // 启动新动画
+    TextAnimator.create('.login-text', config.text, config.options);
+}
+
+
+
+//====================================
 // 显示登录/注册弹窗
 function showAuthModal(type) {
     const modal = document.getElementById('authModal');
@@ -52,14 +208,8 @@ function showAuthModal(type) {
     if (type === 'register') generateAccount();
 }
 
-// 切换选项卡
-function switchTab(type) {
-    document.querySelectorAll('.auth-tab').forEach(tab => {
-        tab.classList.toggle('active', tab.dataset.tab === type);
-    });
-    document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
-    document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
-}
+// 切换选项卡并触发对应的文字动画===============================
+
 
 // 关闭弹窗
 document.getElementById('authModal').addEventListener('click', function(e) {
@@ -68,7 +218,8 @@ document.getElementById('authModal').addEventListener('click', function(e) {
 
 // 绑定按钮事件
 document.querySelector('.login').addEventListener('click', () => showAuthModal('login'));
-document.querySelector('.signin').addEventListener('click', () => showAuthModal('register'));
+//document.querySelector('.signin').addEventListener('click', () => showAuthModal('register'));
+document.querySelector('.cta-button').addEventListener('click', () => showAuthModal('register'));
 
 // 注册处理
 async function handleRegister() {
@@ -98,7 +249,6 @@ async function handleRegister() {
     }
 }
 
-// 登录处理
 // 登录处理（支持参数传入）
 async function handleLogin(account, password) {
     // 如果未传入参数，从输入框获取
@@ -119,7 +269,7 @@ async function handleLogin(account, password) {
             showToast('元神归位成功，请开始你的修仙之旅吧！', 'success',2500)
             // 更新UI
             document.querySelector('.login').style.display = 'none';
-            document.querySelector('.signin').style.display = 'none';
+//            document.querySelector('.signin').style.display = 'none';
             document.querySelector('.user-info').style.display = 'flex';
             document.getElementById('authModal').style.display = 'none';
             // 刷新页面保持状态
@@ -153,7 +303,7 @@ async function checkLoginStatus() {
         const data = await response.json();
         if (data.loggedIn) {
             document.querySelector('.login').style.display = 'none';
-            document.querySelector('.signin').style.display = 'none';
+//            document.querySelector('.signin').style.display = 'none';
             document.querySelector('.user-info').style.display = 'flex';
             document.querySelector('.user-account').textContent = data.account;
         }

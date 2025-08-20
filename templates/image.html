@@ -1,13 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PageTitle</title>
+    <title>凝真玉简 - 图片中心</title>
+    <link rel="stylesheet" href="/static/css/navbar.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/image.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-<div id="APP">
+    <div class="image-container">
+        <!-- 导入通用导航栏 -->
+        {% include 'common/navbar.html' %}
 
-</div>
+        <!-- 搜索区域 -->
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索图片集...">
+                <button id="searchButton">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+        </div>
+
+        <!-- 图片集网格 -->
+        <div class="image-grid-container">
+            <div class="image-grid">
+                <!-- 图片集卡片将通过JavaScript动态加载 -->
+            </div>
+        </div>
+
+        <!-- 搜索结果容器 -->
+        <div class="search-results-container" style="display: none;">
+            <h3>搜索结果</h3>
+            <div class="search-results">
+                <!-- 搜索结果将通过JavaScript动态加载 -->
+            </div>
+        </div>
+
+        <!-- 分页控件 -->
+        <div class="pagination-container">
+            <div class="pagination-controls">
+                <div class="page-navigation">
+                    <button id="prevPage" onclick="prevPage()">上一页</button>
+                    <div class="page-numbers"></div>
+                    <button id="nextPage" onclick="nextPage()">下一页</button>
+                </div>
+                <div class="page-jump">
+                    <span>跳至</span>
+                    <input type="number" id="pageInput" min="1" placeholder="页码">
+                    <button id="jumpButton">跳转</button>
+                </div>
+            </div>
+            <div class="pagination-info"></div>
+        </div>
+    </div>
+
+
+
+    <script src="/static/js/navbar.js"></script>
+    <script src="{{ url_for('static', filename='js/image.js') }}"></script>
 </body>
 </html>

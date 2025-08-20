@@ -1,13 +1,325 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PageTitle</title>
+    <title>凝真玉简 - 音乐中心</title>
+    <link rel="stylesheet" href="/static/css/navbar.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/audio.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-<div id="APP">
+    <!-- 导入通用导航栏 - 移到容器外部 -->
+    {% include 'common/navbar.html' %}
+    
+    <div class="audio-container">
+        
+        <!-- 音频页面专用：侧边栏切换按钮（添加到navbar右侧） -->
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 在navbar的右侧控制区域添加音频侧边栏切换按钮
+            const navControls = document.querySelector('.nav-controls');
+            if (navControls) {
+                // 创建音频侧边栏切换按钮
+                const audioSidebarToggle = document.createElement('button');
+                audioSidebarToggle.className = 'audio-sidebar-toggle';
+                audioSidebarToggle.id = 'audioSidebarToggle';
+                audioSidebarToggle.innerHTML = '<i class="fas fa-music"></i>';
+                audioSidebarToggle.title = '切换音频侧边栏';
+                
+                // 插入到现有控制按钮之前
+                navControls.insertBefore(audioSidebarToggle, navControls.firstChild);
+                
+                // 绑定点击事件
+                audioSidebarToggle.addEventListener('click', function() {
+                    if (window.AudioApp) {
+                        window.AudioApp.toggleSidebar();
+                    }
+                });
+            }
+        });
+        </script>
 
-</div>
+        <!-- 主要内容区域 -->
+        <div class="main-content">
+            <!-- 音频侧边栏遮罩层（仅移动端） -->
+            <div class="audio-sidebar-overlay" id="audioSidebarOverlay"></div>
+            
+            <!-- 左侧导航栏 -->
+            <aside class="sidebar" id="sidebar">
+                <!-- 主要导航 -->
+                <nav class="main-nav">
+                    <div class="nav-section">
+                        <h3>浏览音乐</h3>
+                        <ul class="nav-list">
+                            <li class="nav-item active" data-view="home">
+                                <i class="fas fa-home"></i>
+                                <span>首页</span>
+                            </li>
+                            <li class="nav-item" data-view="albums">
+                                <i class="fas fa-compact-disc"></i>
+                                <span>专辑</span>
+                            </li>
+                            <li class="nav-item" data-view="tracks">
+                                <i class="fas fa-music"></i>
+                                <span>全部歌曲</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 我的音乐 -->
+                    <div class="nav-section">
+                        <h3>我的音乐</h3>
+                        <ul class="nav-list">
+                            <li class="nav-item" data-view="favorites">
+                                <i class="fas fa-heart"></i>
+                                <span>我喜欢的音乐</span>
+                            </li>
+                            <li class="nav-item" data-view="recent">
+                                <i class="fas fa-clock"></i>
+                                <span>最近播放</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <!-- 播放列表 -->
+                    <div class="nav-section">
+                        <div class="section-header">
+                            <h3>播放列表</h3>
+                            <button class="create-playlist-btn" id="createPlaylistBtn">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <ul class="playlist-list" id="playlistList">
+                            <!-- 动态加载播放列表 -->
+                        </ul>
+                    </div>
+                </nav>
+            </aside>
+
+            <!-- 主内容区域 -->
+            <main class="content-main">
+                <div class="content-wrapper">
+                    <!-- 上部：内容区域 -->
+                    <div class="content-area">
+                        <!-- 页面头部 -->
+                        <header class="content-header">
+                            <div class="header-content">
+                                <h1 class="page-title" id="pageTitle">发现音乐</h1>
+                                <!-- 搜索框 -->
+                                <div class="search-container" id="searchContainer">
+                                    <div class="search-box">
+                                        <i class="fas fa-search"></i>
+                                        <input type="text" id="searchInput" placeholder="搜索音乐...">
+                                        <button class="clear-search" id="clearSearch" style="display: none;">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </header>
+
+                        <!-- 内容区域 -->
+                        <div class="content-body">
+                            <!-- 首页视图 -->
+                            <div class="view-container" id="homeView">
+                                <section class="home-section">
+                                    <h2>推荐专辑</h2>
+                                    <div class="album-grid" id="recommendedAlbums">
+                                        <!-- 动态加载推荐专辑 -->
+                                    </div>
+                                </section>
+                                
+                                <section class="home-section">
+                                    <h2>最新添加</h2>
+                                    <div class="track-list compact" id="recentTracks">
+                                        <!-- 动态加载最新歌曲 -->
+                                    </div>
+                                </section>
+                            </div>
+
+                            <!-- 专辑视图 -->
+                            <div class="view-container" id="albumsView" style="display: none;">
+                                <div class="album-grid" id="albumGrid">
+                                    <!-- 动态加载专辑 -->
+                                </div>
+                                <div class="pagination" id="albumPagination"></div>
+                            </div>
+
+                            <!-- 全部歌曲视图 -->
+                            <div class="view-container" id="tracksView" style="display: none;">
+                                <div class="tracks-header">
+                                    <button class="play-all-btn" id="playAllTracksBtn">
+                                        <i class="fas fa-play"></i>
+                                        播放全部
+                                    </button>
+                                    <div class="view-options">
+                                        <button class="sort-btn" id="sortBtn">
+                                            <i class="fas fa-sort"></i>
+                                            排序
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="track-list" id="trackList">
+                                    <!-- 动态加载所有歌曲 -->
+                                </div>
+                                <div class="pagination" id="tracksPagination"></div>
+                            </div>
+
+                            <!-- 专辑详情视图 -->
+                            <div class="view-container" id="albumDetailView" style="display: none;">
+                                <div class="album-header">
+                                    <button class="back-btn" id="backBtn">
+                                        <i class="fas fa-arrow-left"></i>
+                                    </button>
+                                    <div class="album-info">
+                                        <img class="album-cover" id="albumCover" src="/static/images/default.jpg" alt="专辑封面">
+                                        <div class="album-meta">
+                                            <h1 id="albumTitle">专辑名称</h1>
+                                            <p class="album-artist" id="albumArtist">艺术家</p>
+                                            <div class="album-stats">
+                                                <span id="albumYear">2024</span>
+                                                <span class="separator">•</span>
+                                                <span id="albumTrackCount">0 首歌曲</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="album-actions">
+                                        <button class="play-album-btn" id="playAlbumBtn">
+                                            <i class="fas fa-play"></i>
+                                            播放
+                                        </button>
+                                        <button class="like-album-btn" id="likeAlbumBtn">
+                                            <i class="far fa-heart"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="album-tracks" id="albumTracks">
+                                    <!-- 动态加载专辑歌曲 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 下部：播放器区域 -->
+                    <div class="player-area">
+                        <footer class="player-bar">
+                            <!-- 当前播放信息 -->
+                            <div class="now-playing-info">
+                                <img class="track-cover" id="currentTrackCover" src="/static/images/default.jpg" alt="专辑封面">
+                                <div class="track-info">
+                                    <div class="track-title" id="currentTrackTitle">选择一首歌曲</div>
+                                    <div class="track-artist" id="currentTrackArtist">开始播放</div>
+                                </div>
+                                <button class="like-track-btn" id="likeCurrentTrack">
+                                    <i class="far fa-heart"></i>
+                                </button>
+                            </div>
+
+                            <!-- 播放控制 -->
+                            <div class="player-controls">
+                                <div class="control-buttons">
+                                    <button class="control-btn playmode-btn" id="playModeBtn" title="播放模式：顺序播放">
+                                        <i class="fas fa-arrow-right"></i>
+                                    </button>
+                                    <button class="control-btn prev-btn" id="prevBtn" title="上一首">
+                                        <i class="fas fa-step-backward"></i>
+                                    </button>
+                                    <button class="control-btn play-btn" id="playPauseBtn" title="播放/暂停">
+                                        <i class="fas fa-play"></i>
+                                    </button>
+                                    <button class="control-btn next-btn" id="nextBtn" title="下一首">
+                                        <i class="fas fa-step-forward"></i>
+                                    </button>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <span class="time-label" id="currentTime">0:00</span>
+                                    <div class="progress-bar" id="progressBar">
+                                        <div class="progress-fill" id="progressFill"></div>
+                                        <div class="progress-handle" id="progressHandle"></div>
+                                    </div>
+                                    <span class="time-label" id="totalTime">0:00</span>
+                                </div>
+                            </div>
+
+                            <!-- 音量和其他控制 -->
+                            <div class="player-extras">
+                                <button class="control-btn queue-btn" id="queueBtn" title="播放队列">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                                <div class="volume-container" id="volumeContainer">
+                                    <button class="control-btn volume-btn" id="volumeBtn" title="音量">
+                                        <i class="fas fa-volume-up"></i>
+                                    </button>
+                                    <div class="volume-popup" id="volumePopup">
+                                        <div class="volume-slider" id="volumeSlider">
+                                            <div class="volume-fill" id="volumeFill"></div>
+                                            <div class="volume-handle" id="volumeHandle"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </footer>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+    <!-- 创建播放列表模态框 -->
+    <div class="modal-overlay" id="playlistModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>创建播放列表</h3>
+                <button class="modal-close" id="closePlaylistModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="playlistName">播放列表名称</label>
+                    <input type="text" id="playlistName" placeholder="输入播放列表名称">
+                </div>
+                <div class="form-group">
+                    <label for="playlistDescription">描述（可选）</label>
+                    <textarea id="playlistDescription" placeholder="添加描述"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelPlaylist">取消</button>
+                <button class="btn btn-primary" id="savePlaylist">创建</button>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script src="/static/js/navbar.js"></script>
+    <script src="{{ url_for('static', filename='js/audio.js') }}"></script>
+    
+    <!-- 电脑端自动展开侧边栏 -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 检测是否为电脑端（宽度大于768px）
+        function isDesktop() {
+            return window.innerWidth > 768;
+        }
+        
+        // 电脑端自动展开侧边栏
+        function autoExpandSidebarOnDesktop() {
+            const sidebar = document.getElementById('sidebar');
+            if (isDesktop() && sidebar) {
+                sidebar.classList.remove('collapsed');
+            }
+        }
+        
+        // 页面加载时执行
+        autoExpandSidebarOnDesktop();
+        
+        // 窗口大小改变时执行
+        window.addEventListener('resize', function() {
+            autoExpandSidebarOnDesktop();
+        });
+    });
+    </script>
 </body>
 </html>

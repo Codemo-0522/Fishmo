@@ -2,76 +2,154 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>资源管理后台</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
 <body>
-    <div class="admin-layout">
-        <!-- 左侧导航栏 -->
-        <div class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <h2>资源管理</h2>
-                <button class="toggle-sidebar" onclick="toggleSidebar()">
-                    <span class="toggle-icon">◀</span>
-                </button>
-            </div>
-            <div class="nav-items">
-                <div class="nav-item active" onclick="switchSection('video-section')">
-                    <span class="nav-icon">🎥</span>
-                    <span class="nav-text">视频管理</span>
+    <div class="admin-container">
+        <!-- 导入通用导航栏 -->
+        {% include 'common/navbar.html' %}
+        
+        <!-- 移动端侧边栏触发按钮 -->
+        <button class="mobile-nav-toggle" id="mobileNavToggle">
+            <i class="fas fa-angle-right"></i>
+        </button>
+        
+        <!-- 侧边栏遮罩层 -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        
+        <div class="admin-layout">
+            <!-- 左侧导航栏 -->
+            <div class="sidebar" id="sidebar">
+                <div class="sidebar-header">
+                    <h2>资源管理</h2>
+                    <button class="toggle-sidebar" onclick="toggleSidebar()">
+                        <span class="toggle-icon"><</span>
+                    </button>
                 </div>
-                <div class="nav-item" onclick="switchSection('image-section')">
-                    <span class="nav-icon">🖼️</span>
-                    <span class="nav-text">图片管理</span>
-                </div>
-                <div class="nav-item" onclick="switchSection('audio-section')">
-                    <span class="nav-icon">🎵</span>
-                    <span class="nav-text">音频管理</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- 主要内容区域 -->
-        <div class="main-content">
-            <!-- 顶部用户信息栏 -->
-            <div class="top-bar">
-                <div class="user-info">
-                    <span class="user-icon">👤</span>
-                    <span class="user-name">{{ session.get('user_account', 'admin') }}</span>
-                    <button class="logout-btn" onclick="handleLogout()">退出登录</button>
-                </div>
-            </div>
-
-            <div class="content-sections">
-                <!-- 视频管理区域 -->
-                <div id="video-section" class="section-content active">
-                    <div class="section-header">
-                        <h2>视频资源管理</h2>
+                <div class="nav-items">
+                    <div class="nav-item active" onclick="switchSection('video-section')">
+                        <span class="nav-icon">🎥</span>
+                        <span class="nav-text">视频管理</span>
                     </div>
-                    <!-- 配置区域 -->
-                    <div class="config-section">
-                        <h3>基础路径配置</h3>
-                        <div class="config-item">
-                            <label>视频根路径：</label>
-                            <input type="text" id="videoBase">
-                        </div>
-                        <div class="config-item">
-                            <label>缩略图根路径：</label>
-                            <input type="text" id="thumbnailBase">
-                        </div>
-                        <button class="save-btn">保存配置</button>
+                    <div class="nav-item" onclick="switchSection('image-section')">
+                        <span class="nav-icon">🖼️</span>
+                        <span class="nav-text">图片管理</span>
                     </div>
+                    <div class="nav-item" onclick="switchSection('audio-section')">
+                        <span class="nav-icon">🎵</span>
+                        <span class="nav-text">音频管理</span>
+                    </div>
+                </div>
+            </div>
 
-                    <!-- 扫描操作区域 -->
-                    <div class="scan-section">
-                        <h3>扫描操作</h3>
-                        <div class="config-item">
-                            <label>扫描目录：</label>
-                            <input type="text" id="scanDir">
+            <!-- 主要内容区域 -->
+            <div class="main-content">
+                <div class="content-sections">
+                    <!-- 视频管理区域 -->
+                    <div id="video-section" class="section-content active">
+                        <div class="section-header">
+                            <h2>视频资源管理</h2>
                         </div>
-                        <div class="button-group">
-                            <button class="scan-btn">扫描视频</button>
-                            <button class="scan-thumb-btn">生成所有缩略图</button>
+                        <!-- 视频扫描区域 -->
+                        <div class="scan-section">
+                            <h3>文件选择</h3>
+                            <div class="config-item">
+                                <label>视频扫描目录：</label>
+                                <input type="text" id="videoScanDir" placeholder="例如: D:\Temp\Videos">
+                            </div>
+                            <div class="config-item">
+                                <label>缩略图存储目录：</label>
+                                <input type="text" id="thumbnailDir" placeholder="例如: D:\Temp\Thumbnails">
+                            </div>
+                            <div class="config-item">
+                                <label>隐藏视频：</label>
+                                <div class="modern-select-wrapper">
+                                    <div class="modern-select" id="video-isVip-select">
+                                        <div class="select-display">
+                                            <span class="select-text">否（普通用户可访问）</span>
+                                            <i class="fas fa-chevron-down select-arrow"></i>
+                                        </div>
+                                        <div class="select-dropdown">
+                                            <div class="select-option" data-value="false">
+                                                <i class="fas fa-eye option-icon"></i>
+                                                <span>否（普通用户可访问）</span>
+                                            </div>
+                                            <div class="select-option" data-value="true">
+                                                <i class="fas fa-eye-slash option-icon"></i>
+                                                <span>是（仅高权限用户可访问）</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <select id="video-isVip" style="display: none;">
+                                        <option value="false">否（普通用户可访问）</option>
+                                        <option value="true">是（仅高权限用户可访问）</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <button class="scan-btn" onclick="scanVideosWithThumbnails()">扫描视频</button>
+                                <button class="clear-video-table" onclick="clear_video_table()">清空视频表</button>
+                            </div>
+                            <!-- 添加进度条容器 -->
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span class="progress-text">准备就绪</span>
+                                    <span class="progress-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-inner"></div>
+                                </div>
+                            </div>
+                            <div id="scanProgress" class="scan-progress">
+                                <div class="placeholder-text">扫描结果将在这里显示</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 图片管理区域 -->
+                    <div id="image-section" class="section-content">
+                        <div class="section-header">
+                            <h2>图片资源管理</h2>
+                        </div>
+                        <div class="config-section">
+                            <h3>文件选择</h3>
+                            <div class="config-item">
+                                <label>图片扫描目录：</label>
+                                <input type="text" id="imageBase" placeholder="例如 D:\Temp\Images">
+                            </div>
+                            <div class="config-item">
+                                <label>隐藏图片：</label>
+                                <div class="modern-select-wrapper">
+                                    <div class="modern-select" id="image-isVip-select">
+                                        <div class="select-display">
+                                            <span class="select-text">否（普通用户可访问）</span>
+                                            <i class="fas fa-chevron-down select-arrow"></i>
+                                        </div>
+                                        <div class="select-dropdown">
+                                            <div class="select-option" data-value="false">
+                                                <i class="fas fa-eye option-icon"></i>
+                                                <span>否（普通用户可访问）</span>
+                                            </div>
+                                            <div class="select-option" data-value="true">
+                                                <i class="fas fa-eye-slash option-icon"></i>
+                                                <span>是（仅高权限用户可访问）</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <select id="image-isVip" style="display: none;">
+                                        <option value="false">否（普通用户可访问）</option>
+                                        <option value="true">是（仅高权限用户可访问）</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="config-btn-d">
+                                <button class="scan-btn" onclick="image_upload()">扫描图片</button>
+                                <button class="clear-image-table" onclick="clearImageTable()">清空图片表</button>
+                            </div>
                         </div>
                         <!-- 添加进度条容器 -->
                         <div class="progress-container">
@@ -83,31 +161,72 @@
                                 <div class="progress-bar-inner"></div>
                             </div>
                         </div>
-                        <div id="scanProgress" class="scan-progress">
+                        <div id="imgScanProgress" class="scan-progress">
                             <div class="placeholder-text">扫描结果将在这里显示</div>
                         </div>
                     </div>
-                </div>
 
-                <!-- 图片管理区域 -->
-                <div id="image-section" class="section-content">
-                    <div class="section-header">
-                        <h2>图片资源管理</h2>
+                    <!-- 音频管理区域 -->
+                    <div id="audio-section" class="section-content">
+                        <div class="section-header">
+                            <h2>音频资源管理</h2>
+                        </div>
+                        <div class="config-section">
+                            <h3>文件选择</h3>
+                            <div class="config-item">
+                                <label>音频扫描目录：</label>
+                                <input type="text" id="audioBase"placeholder="例如 D:\Temp\Audios">
+                            </div>
+                            <div class="config-item">
+                                <label>隐藏音频：</label>
+                                <div class="modern-select-wrapper">
+                                    <div class="modern-select" id="audio-isVip-select">
+                                        <div class="select-display">
+                                            <span class="select-text">否（普通用户可访问）</span>
+                                            <i class="fas fa-chevron-down select-arrow"></i>
+                                        </div>
+                                        <div class="select-dropdown">
+                                            <div class="select-option" data-value="false">
+                                                <i class="fas fa-eye option-icon"></i>
+                                                <span>否（普通用户可访问）</span>
+                                            </div>
+                                            <div class="select-option" data-value="true">
+                                                <i class="fas fa-eye-slash option-icon"></i>
+                                                <span>是（仅高权限用户可访问）</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <select id="audio-isVip" style="display: none;">
+                                        <option value="false">否（普通用户可访问）</option>
+                                        <option value="true">是（仅高权限用户可访问）</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="config-btn-d">
+                                <button class="scan-btn" onclick="scanAudio()">扫描音频</button>
+                                <button class="clear-audio-table" onclick="clearAudioTable()">清空音频表</button>
+                            </div>
+                        </div>
+                        <!-- 添加进度条容器 -->
+                        <div class="progress-container">
+                            <div class="progress-info">
+                                <span class="progress-text">准备就绪</span>
+                                <span class="progress-percentage">0%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-bar-inner"></div>
+                            </div>
+                        </div>
+                        <div id="audioScanProgress" class="scan-progress">
+                            <div class="placeholder-text">扫描结果将在这里显示</div>
+                        </div>
                     </div>
-                    <div class="placeholder-text">图片管理功能开发中...</div>
-                </div>
-
-                <!-- 音频管理区域 -->
-                <div id="audio-section" class="section-content">
-                    <div class="section-header">
-                        <h2>音频资源管理</h2>
-                    </div>
-                    <div class="placeholder-text">音频管理功能开发中...</div>
                 </div>
             </div>
         </div>
     </div>
 
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
     <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
 </body>
 </html>
