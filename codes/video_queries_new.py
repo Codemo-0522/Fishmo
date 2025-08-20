@@ -1,11 +1,5 @@
-# =====================================================
-# 新的视频查询函数 - 支持跨根目录的视频管理
-# 基于新的 video_collection 和 video_item 表结构
-# =====================================================
-
 from codes.connect_mysql import Connect_mysql
 from pathlib import Path
-import logging
 
 db = Connect_mysql()
 

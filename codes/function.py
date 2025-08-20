@@ -1,13 +1,13 @@
-# codes/function.py
 import os
 import subprocess
 from codes import query_database
 from codes import env_loader
-import tkinter as tk
-from tkinter import filedialog
 from pathlib import Path
 
 from pymediainfo import MediaInfo
+from functools import wraps
+from flask import abort, session
+from codes.video_queries_new import insert_video_collection, insert_video_item, get_or_create_disk
 
 
 def get_optimal_screenshot_time(video_path):
@@ -241,11 +241,6 @@ def get_video_structure(app):
     
     return video_structure
 
-
-# 生成flask的app secret key
-from functools import wraps
-from flask import abort, session
-
 def admin_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -262,18 +257,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-
-# 选择视频根路径和缩略图根路径并写入数据库
-def select_and_save_paths(app):
-    root = tk.Tk()
-    root.withdraw()
-    video_base = filedialog.askdirectory(title='选择视频根路径')
-    thumbnail_base = filedialog.askdirectory(title='选择缩略图根路径')
-    if video_base and thumbnail_base:
-        # 转换为Path对象，然后再转回字符串以确保路径格式一致
-        app.config['VIDEO_BASE'] = str(Path(video_base))
-        app.config['THUMBNAIL_BASE'] = str(Path(thumbnail_base))
-        query_database.save_video_config(app.config['VIDEO_BASE'], app.config['THUMBNAIL_BASE'])
 
 #视频画质匹配
 STANDARD_RESOLUTIONS = [
@@ -419,10 +402,7 @@ def scan_and_process_videos(app, parent_dir, video_base, is_vip=False, progress_
 
                 # 确定权限组ID（1=普通用户，2=VIP用户）
                 group_id = 2 if is_vip else 1
-                
-                # 执行数据库插入 - 使用新表结构
-                from codes.video_queries_new import insert_video_collection, insert_video_item, get_or_create_disk
-                
+
                 # 获取或创建磁盘记录
                 config_data = query_database.get_video_config()
                 if config_data and config_data.get('video_base'):

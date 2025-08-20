@@ -1,17 +1,24 @@
 import os
-import subprocess
 from datetime import timedelta
-
 from flask import Flask, render_template, send_from_directory, url_for, request, jsonify, session, Response, abort, redirect
 from codes import query_database
-from codes import env_loader
-from codes import function as fun
 from functools import wraps
 import json
 import time
 import logging
 from pathlib import Path
+import threading
+from codes.video_queries_new import db
+from codes import function as fun
+from codes.video_scan_new import scan_and_process_videos_new
+from codes.video_queries_new import get_videos_paginated_new
+from codes.video_queries_new import get_video_categories_new
+from codes.video_queries_new import search_videos_by_name_new
+from codes.video_scan_new import migrate_from_old_videos
 import traceback
+from codes import connect_mysql
+import re
+from codes.audio_processor import AudioProcessor
 
 # 配置日志
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -27,10 +34,7 @@ app.config.update({
 # 配置会话持久化时间（例如7天）
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 
-# 全局变量 ============================================>
-# 全局变量用于存储进度信息
-import threading
-
+# 全局变量用于存储进度信息 ============================================>
 # 使用线程锁保证线程安全
 progress_lock = threading.Lock()
 
@@ -122,8 +126,6 @@ def serve_video(filename):
         
         # 尝试从新表结构获取视频路径（参考图片模块的正确实现）
         try:
-            from codes.video_queries_new import db
-            
             with db.connect() as conn:
                 with conn.cursor() as cursor:
                     # 检查新表是否有数据
@@ -204,8 +206,6 @@ def serve_thumbnail(filename):
         
         # 首先尝试从新表结构查找缩略图
         try:
-            from codes.video_queries_new import db
-            
             with db.connect() as conn:
                 with conn.cursor() as cursor:
                     # 精确查找缩略图对应的视频记录
@@ -278,7 +278,6 @@ def serve_thumbnail(filename):
                             # 生成缩略图
                             video_full_path = Path(video_mount) / storage_root / video_relative_path
                             if video_full_path.exists():
-                                from codes import function as fun
                                 if fun.generate_thumbnail(str(video_full_path), str(thumbnail_full_path)):
                                     print(f"缩略图生成成功: {thumbnail_full_path}")
                                     return send_from_directory(str(thumbnail_full_path.parent), thumbnail_full_path.name)
@@ -415,9 +414,6 @@ def scan_videos():
         
         # 检查是否使用新的扫描逻辑
         try:
-            # 尝试导入新的扫描函数
-            from codes.video_scan_new import scan_and_process_videos_new
-            
             # 从请求中获取缩略图目录（如果提供）
             thumbnail_dir = data.get('thumbnailDir')
             
@@ -566,7 +562,6 @@ def get_videos():
         print(f"用户权限组: {user_group}")
 
         # 使用新表结构查询视频
-        from codes.video_queries_new import get_videos_paginated_new
         total_count, videos = get_videos_paginated_new(
             page=page,
             per_page=per_page,
@@ -601,7 +596,6 @@ def get_videos():
 def get_video_categories():
     try:
         # 使用新表结构查询分类
-        from codes.video_queries_new import get_video_categories_new
         categories = get_video_categories_new()
             
         return jsonify({
@@ -637,7 +631,6 @@ def search_videos():
             user_group = 1
 
         # 使用新表结构搜索视频
-        from codes.video_queries_new import search_videos_by_name_new
         total_count, videos = search_videos_by_name_new(
             keyword,
             page=page,
@@ -698,8 +691,6 @@ def clear_table():
 def force_clear_videos():
     """强制清空所有视频表数据"""
     try:
-        from codes.query_database import db
-        
         with db.connect() as conn:
             with conn.cursor() as cursor:
                 # 禁用外键检查
@@ -751,8 +742,6 @@ def force_clear_videos():
 def migrate_videos():
     """迁移视频数据到新表结构"""
     try:
-        from codes.video_scan_new import migrate_from_old_videos
-        
         print("开始迁移视频数据到新表结构...")
         result = migrate_from_old_videos()
         
@@ -774,8 +763,6 @@ def migrate_videos():
 def check_migration_status():
     """检查数据迁移状态"""
     try:
-        from codes.query_database import db
-        
         with db.connect() as conn:
             with conn.cursor() as cursor:
                 # 检查新表记录数
@@ -807,7 +794,6 @@ def clear_image_table():
     """清空图片数据表"""
     try:
         print("开始清空图片表数据库")
-        from codes import connect_mysql
         db = connect_mysql.Connect_mysql()
         
         with db.connect() as conn:
@@ -832,7 +818,6 @@ def clear_image_table():
                 
     except Exception as e:
         print(f"清空图片表异常: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({"message": f"清空图片表失败: {str(e)}"}), 500
 
@@ -840,8 +825,6 @@ def clear_image_table():
 @app.route('/api/scan-images', methods=['POST'])
 def scan_images():
     print("开始调用图片扫描接口")
-    from codes import connect_mysql
-    
     try:
         # 获取前端参数（JSON 格式）
         data = request.get_json()  # 解析 JSON 请求体
@@ -884,7 +867,6 @@ def scan_images():
             if '共处理' in message and '个文件' in message:
                 try:
                     # 提取数字
-                    import re
                     match = re.search(r'共处理(\d+)个文件', message)
                     if match:
                         images_added = int(match.group(1))
@@ -909,7 +891,6 @@ def scan_images():
 
     except Exception as e:
         print(f"图片扫描异常: {str(e)}")
-        import traceback
         traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
@@ -1402,7 +1383,6 @@ def serve_audio(filename):
         print(f"错误类型: {type(e)}")
         print(f"错误信息: {str(e)}")
         print("错误堆栈:")
-        import traceback
         traceback.print_exc()
         abort(500)
 
@@ -1426,7 +1406,6 @@ def scan_audio():
         print("📊 音频扫描进度已重置")
             
         # 🎯 创建音频处理器实例，传递进度回调
-        from codes.audio_processor import AudioProcessor
         processor = AudioProcessor()
         
         # 🎯 处理音频文件（传递进度回调函数）

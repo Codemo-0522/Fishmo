@@ -1,10 +1,12 @@
 from codes import connect_mysql
-from codes import function
 import os
 from flask import jsonify
 import re
 import logging  # 添加logging模块导入
 import time
+from codes.video_queries_new import get_videos_paginated_new
+from codes.video_queries_new import check_video_access_new
+import traceback
 
 # 数据库连接实例
 db=connect_mysql.Connect_mysql()
@@ -113,9 +115,8 @@ def get_videos_paginated(page=1, per_page=20, category='', user_group=1):
         tuple: (总数量, 视频列表)
     """
     try:
-                        # 使用新表结构
-                from codes.video_queries_new import get_videos_paginated_new
-                return get_videos_paginated_new(page, per_page, category, user_group)
+        # 使用新表结构
+        return get_videos_paginated_new(page, per_page, category, user_group)
                 
     except Exception as e:
         print(f"获取分页视频列表失败: {str(e)}")
@@ -245,7 +246,6 @@ def check_video_access(video_path, user_group=1):
     """
     try:
         # 使用新表结构
-        from codes.video_queries_new import check_video_access_new
         return check_video_access_new(video_path, user_group)
     
     except Exception as e:
@@ -253,7 +253,6 @@ def check_video_access(video_path, user_group=1):
         print(f"错误类型: {type(e)}")
         print(f"错误信息: {str(e)}")
         print("错误堆栈:")
-        import traceback
         traceback.print_exc()
         return False
 
@@ -417,7 +416,6 @@ def get_image_collections_paginated(page=1, per_page=20, user_group=1):
     
     except Exception as e:
         print(f"获取图片集列表分页出错: {e}")
-        import traceback
         print(traceback.format_exc())
         return 0, []
 
@@ -564,7 +562,6 @@ def search_image_collections(keyword, page=1, per_page=20, user_group=1):
     
     except Exception as e:
         print(f"搜索图片集出错: {e}")
-        import traceback
         print(traceback.format_exc())
         return 0, []
 
@@ -685,7 +682,6 @@ def get_image_collection_by_id(collection_id, user_group=1):
     
     except Exception as e:
         print(f"获取图片集详情出错: {e}")
-        import traceback
         print(traceback.format_exc())
         return None
 
@@ -1141,7 +1137,6 @@ def check_audio_access(file_path, user_group=1):
         print(f"错误类型: {type(e)}")
         print(f"错误信息: {str(e)}")
         print("错误堆栈:")
-        import traceback
         traceback.print_exc()
         return False
 

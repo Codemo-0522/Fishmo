@@ -1,10 +1,10 @@
 import os
-import traceback
 from pathlib import Path
-
 import pymysql
 from codes import env_loader
 import json
+from flask import current_app
+import main
 
 # 数据库连接和操作
 class Connect_mysql:
@@ -215,10 +215,8 @@ class Connect_mysql:
         if progress_callback is None:
             try:
                 # 通过 Flask 的应用上下文获取
-                from flask import current_app
                 if hasattr(current_app, '_get_current_object'):
                     # 从全局模块获取进度更新函数
-                    import main
                     progress_callback = main.update_image_scan_progress
                     print("✅ 成功获取进度回调函数")
                 else:

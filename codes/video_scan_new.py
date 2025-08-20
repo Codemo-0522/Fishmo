@@ -1,8 +1,3 @@
-# =====================================================
-# 新的视频扫描逻辑 - 支持跨根目录的视频管理
-# 基于新的 video_collection 和 video_item 表结构
-# =====================================================
-
 import os
 from pathlib import Path
 from pymediainfo import MediaInfo
@@ -10,6 +5,7 @@ from codes.video_queries_new import (
     insert_video_collection, insert_video_item, get_or_create_disk, smart_fix_video_path
 )
 from codes import function as fun
+from codes.query_database import db, get_video_config
 
 def scan_and_process_videos_new(app, parent_dir, is_vip=False, progress_callback=None, thumbnail_dir=None):
     """
@@ -376,8 +372,6 @@ def migrate_from_old_videos():
         dict: 迁移结果
     """
     try:
-        from codes.query_database import db, get_video_config
-        
         result = {
             'migrated_categories': 0,
             'migrated_videos': 0,
