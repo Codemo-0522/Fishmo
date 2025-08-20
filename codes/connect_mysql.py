@@ -4,7 +4,6 @@ import pymysql
 from codes import env_loader
 import json
 from flask import current_app
-import main
 
 # 数据库连接和操作
 class Connect_mysql:
@@ -211,24 +210,13 @@ class Connect_mysql:
         }
         print(f"📷 支持的图片格式: {sorted(SUPPORTED_IMAGE_FORMATS)}")
         
-        # 🎯 优先使用传入的回调函数，否则尝试动态获取
-        if progress_callback is None:
-            try:
-                # 通过 Flask 的应用上下文获取
-                if hasattr(current_app, '_get_current_object'):
-                    # 从全局模块获取进度更新函数
-                    progress_callback = main.update_image_scan_progress
-                    print("✅ 成功获取进度回调函数")
-                else:
-                    print("⚠️ 无法获取Flask应用上下文")
-            except Exception as e:
-                print(f"❌ 获取进度回调函数失败: {str(e)}")
-        
-        # 如果仍然无法获取进度回调，创建一个打印版本
+        # 🎯 优先使用传入的回调函数，如果没有则使用打印版本
         if progress_callback is None:
             def progress_callback(percentage, current_file, current, total):
                 print(f"🔄 图片扫描进度: {percentage}% - {current_file} ({current}/{total})")
             print("📝 使用打印版本的进度回调")
+        
+
         
         # 简化进度更新函数调用
         def update_progress(percentage, message, current=0, total=0):
