@@ -25,7 +25,7 @@ def load_env():
         'ffmpeg_path': os.getenv('ffmpeg_path', ''),
         'video_everyPageShowVideoNum': int(os.getenv('video_everyPageShowVideoNum', '30')),
         'app_host': os.getenv('app_host', '0.0.0.0'),
-        'app_port': int(os.getenv('app_port', '1015'))
+        'app_port': int(os.getenv('app_port', '5000'))
     }
 
 # 加载环境变量
