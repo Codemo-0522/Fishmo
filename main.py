@@ -99,14 +99,20 @@ def update_audio_scan_progress(percentage, current_file):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # 获取用户权限信息
+    user_role = session.get('user_role', None)
+    is_admin = user_role == 'admin'
+    return render_template('index.html', is_admin=is_admin)
 
 
 @app.route('/video')
 def video_page():
     with app.app_context():
         default_thumb = url_for('static', filename=app.config['DEFAULT_THUMB_PATH'])
-    return render_template('video.html', default_thumb=default_thumb)
+    # 获取用户权限信息
+    user_role = session.get('user_role', None)
+    is_admin = user_role == 'admin'
+    return render_template('video.html', default_thumb=default_thumb, is_admin=is_admin)
 
 @app.route('/videos/<path:filename>')
 def serve_video(filename):
@@ -297,18 +303,27 @@ def serve_thumbnail(filename):
 def image_page():
     with app.app_context():
         default_thumb = url_for('static', filename=app.config['DEFAULT_THUMB_PATH'])
-    return render_template('image.html', default_thumb=default_thumb)
+    # 获取用户权限信息
+    user_role = session.get('user_role', None)
+    is_admin = user_role == 'admin'
+    return render_template('image.html', default_thumb=default_thumb, is_admin=is_admin)
 
 @app.route('/show_image')
 def show_image():
     collection_id = request.args.get('id')
     if not collection_id:
         return redirect(url_for('image_page'))
-    return render_template('show_image.html', collection_id=collection_id)
+    # 获取用户权限信息
+    user_role = session.get('user_role', None)
+    is_admin = user_role == 'admin'
+    return render_template('show_image.html', collection_id=collection_id, is_admin=is_admin)
 
 @app.route('/audio')
 def audio_page():
-    return render_template('audio.html')
+    # 获取用户权限信息
+    user_role = session.get('user_role', None)
+    is_admin = user_role == 'admin'
+    return render_template('audio.html', is_admin=is_admin)
 
 
 # ====================================================
@@ -374,11 +389,98 @@ def check_login():
 
 # ========================================================
 
+# 通用错误页面路由
+@app.route('/error')
+def error_page():
+    """通用错误页面路由"""
+    error_code = request.args.get('code', '500')
+    error_title = request.args.get('title', '发生错误')
+    error_message = request.args.get('message', '抱歉，发生了一个错误')
+    
+    # 根据错误代码提供默认建议
+    default_suggestions = {
+        '401': [
+            '请先登录您的账户',
+            '检查您的登录凭据是否正确',
+            '如果忘记密码，请联系管理员重置'
+        ],
+        '403': [
+            '此操作需要更高的权限',
+            '请联系管理员获取相应权限',
+            '您可以返回其他页面继续浏览'
+        ],
+        '404': [
+            '检查URL是否输入正确',
+            '该页面可能已被移动或删除',
+            '您可以返回首页重新导航'
+        ],
+        '500': [
+            '请稍后再试',
+            '如果问题持续存在，请联系技术支持',
+            '您可以刷新页面或返回首页'
+        ]
+    }
+    
+    suggestions = default_suggestions.get(error_code, default_suggestions['500'])
+    
+    # 获取用户权限信息
+    user_role = session.get('user_role', None)
+    is_admin = user_role == 'admin'
+    
+    return render_template('error.html',
+        error_code=error_code,
+        error_title=error_title,
+        error_message=error_message,
+        error_suggestions=suggestions,
+        is_admin=is_admin
+    )
+
+# 自定义错误处理器
+@app.errorhandler(404)
+def page_not_found(e):
+    """404错误处理器"""
+    user_role = session.get('user_role', None)
+    is_admin = user_role == 'admin'
+    
+    return render_template('error.html',
+        error_code=404,
+        error_title='页面未找到',
+        error_message='抱歉，您访问的页面不存在',
+        error_suggestions=[
+            '检查URL是否输入正确',
+            '该页面可能已被移动或删除',
+            '您可以返回首页重新导航'
+        ],
+        is_admin=is_admin
+    ), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    """500错误处理器"""
+    user_role = session.get('user_role', None)
+    is_admin = user_role == 'admin'
+    
+    return render_template('error.html',
+        error_code=500,
+        error_title='服务器内部错误',
+        error_message='抱歉，服务器发生了内部错误',
+        error_suggestions=[
+            '请稍后再试',
+            '如果问题持续存在，请联系技术支持',
+            '您可以刷新页面或返回首页'
+        ],
+        error_details=str(e) if app.debug else None,
+        is_admin=is_admin
+    ), 500
+
+# ========================================================
+
 # 管理员接口
 @app.route('/admin')
 @fun.admin_required
 def admin_page():
-    return render_template('admin.html')
+    # 获取用户权限信息（admin页面只有admin用户能访问，所以is_admin=True）
+    return render_template('admin.html', is_admin=True)
 
 # 获取配置接口
 @app.route('/api/get-config')
@@ -439,7 +541,7 @@ def scan_videos():
             print(f"视频扫描错误: {str(e)}")
             return jsonify({
                 'status': 'error',
-                'message': f'视频扫描失败: {str(e)}'
+                'message': str(e)
             })
     except Exception as e:
         print(f"扫描视频异常: {str(e)}")
@@ -910,7 +1012,7 @@ def get_image_collections():
     try:
         # 获取分页参数
         page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 20))
+        per_page = int(request.args.get('per_page', env_loader.image_everyPageShowImageNum))
         search = request.args.get('search', '')
         
         # 获取当前用户组
@@ -1181,6 +1283,40 @@ def get_collection_images(collection_id):
     except Exception as e:
         app.logger.error(f"获取图片集图片时发生错误: {str(e)}")
         return jsonify({"error": f"获取图片集图片时发生错误: {str(e)}"}), 500
+
+@app.route('/api/show_image_config')
+def get_show_image_config():
+    """获取show_image页面的配置信息"""
+    try:
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'imagesPerPage': env_loader.showImage_everyPageShowImageNum
+            }
+        })
+    except Exception as e:
+        print(f"获取show_image配置失败: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'获取配置失败: {str(e)}'
+        })
+
+@app.route('/api/audio_config')
+def get_audio_config():
+    """获取audio页面的配置信息"""
+    try:
+        return jsonify({
+            'status': 'success',
+            'data': {
+                'audioPerPage': env_loader.audio_everyPageShowAudioNum
+            }
+        })
+    except Exception as e:
+        print(f"获取audio配置失败: {str(e)}")
+        return jsonify({
+            'status': 'error',
+            'message': f'获取配置失败: {str(e)}'
+        })
 
 @app.route('/api/audio_collections')
 def get_audio_collections():

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ error_title or '访问受限' }} - Fishmo</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/error.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <!-- 导入通用导航栏 -->
+    {% include 'common/navbar.html' %}
+
+    <div class="error-container">
+        <div class="error-content">
+            <!-- 错误图标 -->
+            <div class="error-icon">
+                {% if error_code == 401 %}
+                    <i class="fas fa-lock"></i>
+                {% elif error_code == 403 %}
+                    <i class="fas fa-ban"></i>
+                {% elif error_code == 404 %}
+                    <i class="fas fa-search"></i>
+                {% elif error_code == 500 %}
+                    <i class="fas fa-exclamation-triangle"></i>
+                {% else %}
+                    <i class="fas fa-question-circle"></i>
+                {% endif %}
+            </div>
+
+            <!-- 错误信息 -->
+            <div class="error-info">
+                <h1 class="error-code">{{ error_code or '403' }}</h1>
+                <h2 class="error-title">{{ error_title or '访问受限' }}</h2>
+                <p class="error-message">{{ error_message or '抱歉，您没有权限访问此页面' }}</p>
+                
+                {% if error_suggestions %}
+                <div class="error-suggestions">
+                    <h3>建议解决方案：</h3>
+                    <ul>
+                        {% for suggestion in error_suggestions %}
+                        <li>{{ suggestion }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- 操作按钮 -->
+            <div class="error-actions">
+                <button class="btn btn-primary" onclick="history.back()">
+                    <i class="fas fa-arrow-left"></i>
+                    返回上页
+                </button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">
+                    <i class="fas fa-home"></i>
+                    返回首页
+                </a>
+                {% if error_code in [401, 403] %}
+                <button class="btn btn-success" onclick="showLoginModal()">
+                    <i class="fas fa-sign-in-alt"></i>
+                    重新登录
+                </button>
+                {% endif %}
+            </div>
+
+            <!-- 错误详情（开发模式下显示） -->
+            {% if error_details and config.DEBUG %}
+            <div class="error-details">
+                <details>
+                    <summary>错误详情（开发模式）</summary>
+                    <pre>{{ error_details }}</pre>
+                </details>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- 装饰元素 -->
+        <div class="decorative-elements">
+            <div class="floating-element element-1">✨</div>
+            <div class="floating-element element-2">🌟</div>
+            <div class="floating-element element-3">💫</div>
+            <div class="floating-element element-4">⭐</div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/navbar.js') }}"></script>
+    <script>
+        // 添加页面动画效果
+        document.addEventListener('DOMContentLoaded', function() {
+            const errorContent = document.querySelector('.error-content');
+            errorContent.style.opacity = '0';
+            errorContent.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                errorContent.style.transition = 'all 0.6s ease-out';
+                errorContent.style.opacity = '1';
+                errorContent.style.transform = 'translateY(0)';
+            }, 100);
+
+            // 浮动元素动画
+            document.querySelectorAll('.floating-element').forEach((element, index) => {
+                element.style.animationDelay = `${index * 0.5}s`;
+            });
+        });
+    </script>
+</body>
+</html>

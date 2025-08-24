@@ -67,6 +67,99 @@ body {
     will-change: transform, width, height, position;
 }
 
+/* 大窗播放器样式 */
+.main-player {
+    /* 保持原有的大窗样式 */
+}
+
+.main-player #mainVideoPlayer {
+    width: 100%;
+    height: calc(min(var(--player-height, 300px), var(--max-player-height, 600px)));
+    display: block;
+}
+
+/* 小窗播放器样式 */
+.pip-player {
+    position: fixed !important;
+    top: 20px !important;
+    right: 20px !important;
+    width: 340px;
+    height: auto;
+    margin: 0 !important;
+    z-index: 9999 !important; /* 最高优先级 */
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.5);
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    transform: translateZ(0);
+    will-change: transform, width, height, position;
+    max-width: calc(100vw - 40px); /* 确保不超出屏幕 */
+    opacity: 1;
+    /* 确保不受父容器影响 */
+    left: auto !important;
+    bottom: auto !important;
+}
+
+.pip-player #pipVideoPlayer {
+    width: 100%;
+    height: 192px; /* 保持宽高比16:9 */
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    transition: all 0.3s ease;
+    object-fit: contain; /* 保持视频原始比例，不裁剪 */
+}
+
+/* 全屏退出时的过渡动画 */
+.pip-player.fullscreen-exiting #pipVideoPlayer {
+    transition: none !important;
+    transform: scale(1);
+}
+
+/* 全屏模式 */
+.pip-player.fullscreen #pipVideoPlayer {
+    transition: none;
+}
+
+.pip-player .video-info-panel {
+    display: none;
+}
+
+.pip-player .video-player {
+    width: 100%;
+    background: #000;
+    position: relative;
+    border-radius: 8px 8px 0 0;
+    overflow: hidden;
+}
+
+.pip-player .pip-close {
+    opacity: 1;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+    background: rgba(0, 0, 0, 0.7);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 8600;
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.3s;
+    pointer-events: auto;
+}
+
+.pip-player .pip-close:hover {
+    background: rgba(255, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+.pip-player .pip-close i {
+    font-size: 14px;
+}
+
 .video-player-container.hidden {
     display: none;
 }
@@ -185,6 +278,43 @@ body {
 
 /* 响应式小窗播放模式 */
 @media (max-width: 767px) {
+    /* 手机端完全隐藏小窗播放器 */
+    .pip-player {
+        display: none !important;
+    }
+    /* 移动端视频播放器触摸优化 */
+    #mainVideoPlayer,
+    #pipVideoPlayer {
+        -webkit-user-select: none;
+        -webkit-touch-callout: none;
+        -webkit-tap-highlight-color: transparent;
+        touch-action: none; /* 禁用默认触摸行为 */
+    }
+    
+    /* 移动端视频播放器滑动进度提示 */
+    #mainVideoPlayer::before,
+    #pipVideoPlayer::before {
+        content: '← 快退 | 快进 →';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 10px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+        z-index: 10;
+        white-space: nowrap;
+    }
+    
+    #mainVideoPlayer:active::before,
+    #pipVideoPlayer:active::before {
+        opacity: 1;
+    }
     .video-player-container.pip-mode {
         width: 240px;
         top: 0;
@@ -194,6 +324,27 @@ body {
     
     .pip-mode #videoPlayer {
         height: 135px; /* 保持宽高比16:9 (240px / 16 * 9 = 135px) */
+    }
+    
+    .pip-player {
+        width: 100vw !important;
+        top: 0 !important;
+        right: 0 !important;
+        left: 0 !important;
+        max-width: 100vw !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        height: 30vh !important;
+    }
+    
+    .pip-player #pipVideoPlayer {
+        height: 100% !important;
+        border-radius: 0 !important;
+    }
+    
+    .pip-player .video-player {
+        border-radius: 0 !important;
+        height: 100% !important;
     }
 }
 
@@ -217,6 +368,28 @@ body {
     }
     
     .pip-close i {
+        font-size: 12px;
+    }
+    
+    .pip-player {
+        width: 210px;
+        top: 10px;
+        right: 10px;
+        max-width: calc(100vw - 20px);
+    }
+    
+    .pip-player #pipVideoPlayer {
+        height: 118px;
+    }
+    
+    .pip-player .pip-close {
+        width: 24px;
+        height: 24px;
+        top: 5px;
+        right: 5px;
+    }
+    
+    .pip-player .pip-close i {
         font-size: 12px;
     }
 }
@@ -402,14 +575,26 @@ body {
     overflow: hidden;
     box-shadow: 0 2px 10px var(--shadow-color);
     cursor: pointer;
-    transition: transform 0.3s, box-shadow 0.3s;
-    border: 1px solid var(--border-color);
+    transition: transform 0.3s, box-shadow 0.3s, border-color 0.3s;
+    border: 2px solid transparent;
 }
 
 .video-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px var(--shadow-color);
-    border-color: var(--primary-color);
+}
+
+/* 当前播放的视频卡片 */
+.video-card.playing {
+    border: 2px solid var(--primary-color) !important;
+    box-shadow: 0 4px 20px rgba(74, 144, 226, 0.3);
+    background: rgba(74, 144, 226, 0.1);
+}
+
+/* 当前播放视频的标题 */
+.video-card.playing .video-title {
+    color: var(--primary-color) !important;
+    font-weight: 600;
 }
 
 .thumbnail-container {
@@ -440,16 +625,26 @@ body {
     align-items: center;
     justify-content: center;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, background-color 0.3s;
 }
 
-.video-card:hover .play-button {
+.video-card:hover .play-button,
+.video-card.playing .play-button {
     opacity: 1;
+}
+
+.video-card.playing .play-button {
+    background: rgba(74, 144, 226, 0.8);
 }
 
 .play-button i {
     color: white;
     font-size: 20px;
+    transition: transform 0.3s;
+}
+
+.video-card.playing .play-button i {
+    transform: scale(1.1);
 }
 
 .video-info {

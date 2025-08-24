@@ -794,7 +794,9 @@ def get_audio_collections_paginated(page=1, per_page=20, user_group=1):
                         c.artist,
                         COUNT(a.audio_id) AS audio_count,
                         d.mount_path,
-                        c.storage_root
+                        c.storage_root,
+                        MIN(a.relative_path) AS first_track_path,
+                        MIN(a.title) AS first_track_title
                     FROM 
                         audio_collection c
                     LEFT JOIN 
@@ -817,7 +819,7 @@ def get_audio_collections_paginated(page=1, per_page=20, user_group=1):
                 
                 collections = []
                 for row in rows:
-                    collection_id, collection_name, group_id, cover_path, artist, audio_count, mount_path, storage_root = row
+                    collection_id, collection_name, group_id, cover_path, artist, audio_count, mount_path, storage_root, first_track_path, first_track_title = row
                     
                     # 处理封面图路径
                     if cover_path:
@@ -826,13 +828,22 @@ def get_audio_collections_paginated(page=1, per_page=20, user_group=1):
                     else:
                         cover_path = "/static/images/default-album.jpg"
                     
+                    # 创建第一首音频信息（用于封面提取）
+                    first_track = None
+                    if first_track_path:
+                        first_track = {
+                            'relative_path': first_track_path.replace('\\', '/'),
+                            'title': first_track_title or '未知标题'
+                        }
+                    
                     collection_data = {
                         'collection_id': collection_id,
                         'collection_name': collection_name,
                         'group_id': group_id,
                         'cover_path': cover_path,
                         'artist': artist,
-                        'audio_count': audio_count
+                        'audio_count': audio_count,
+                        'first_track': first_track
                     }
                     collections.append(collection_data)
                 
@@ -888,7 +899,9 @@ def search_audio_collections(keyword, page=1, per_page=20, user_group=1):
                         c.artist,
                         COUNT(a.audio_id) AS audio_count,
                         d.mount_path,
-                        c.storage_root
+                        c.storage_root,
+                        MIN(a.relative_path) AS first_track_path,
+                        MIN(a.title) AS first_track_title
                     FROM 
                         audio_collection c
                     LEFT JOIN 
@@ -911,7 +924,7 @@ def search_audio_collections(keyword, page=1, per_page=20, user_group=1):
                 
                 collections = []
                 for row in rows:
-                    collection_id, collection_name, group_id, cover_path, artist, audio_count, mount_path, storage_root = row
+                    collection_id, collection_name, group_id, cover_path, artist, audio_count, mount_path, storage_root, first_track_path, first_track_title = row
                     
                     # 处理封面图路径
                     if cover_path:
@@ -920,13 +933,22 @@ def search_audio_collections(keyword, page=1, per_page=20, user_group=1):
                     else:
                         cover_path = "/static/images/default-album.jpg"
                     
+                    # 创建第一首音频信息（用于封面提取）
+                    first_track = None
+                    if first_track_path:
+                        first_track = {
+                            'relative_path': first_track_path.replace('\\', '/'),
+                            'title': first_track_title or '未知标题'
+                        }
+                    
                     collection_data = {
                         'collection_id': collection_id,
                         'collection_name': collection_name,
                         'group_id': group_id,
                         'cover_path': cover_path,
                         'artist': artist,
-                        'audio_count': audio_count
+                        'audio_count': audio_count,
+                        'first_track': first_track
                     }
                     collections.append(collection_data)
                 

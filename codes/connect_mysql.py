@@ -76,7 +76,7 @@ class Connect_mysql:
             # ================== 参数校验 ==================
             path = Path(root_path).resolve()
             if not path.exists():
-                return {'status': 'error', 'message': '路径不存在'}
+                return {'status': 'error', 'message': f'目录不存在: {root_path}'}
             if not path.is_dir():
                 return {'status': 'error', 'message': '需要目录路径'}
             print(f"解析后绝对路径：{path}")
@@ -296,8 +296,8 @@ class Connect_mysql:
             # ================== 参数校验 ==================
             path = Path(root_path).resolve()
             if not path.exists():
-                update_progress(0, '路径不存在', 0, 0)
-                return {'status': 'error', 'message': '路径不存在'}
+                update_progress(0, '目录不存在', 0, 0)
+                return {'status': 'error', 'message': f'目录不存在: {root_path}'}
             if not path.is_dir():
                 update_progress(0, '需要目录路径', 0, 0)
                 return {'status': 'error', 'message': '需要目录路径'}
@@ -307,7 +307,7 @@ class Connect_mysql:
             if os.name == 'nt':  # Windows系统
                 if not path.drive:
                     update_progress(0, '需要包含盘符的绝对路径', 0, 0)
-                    return {'status': 'error', 'message': '需要包含盘符的绝对路径'}
+                    return {'status': 'error', 'message': f'目录不存在: {root_path}'}
                 disk_drive = path.drive[0]
                 mount_path = Path(f"{disk_drive}:\\").resolve()
             else:  # Linux/Mac

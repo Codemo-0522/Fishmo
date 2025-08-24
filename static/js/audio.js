@@ -29,7 +29,10 @@ const AudioApp = {
     audioPlayer: new Audio(),
     
     // 初始化应用
-    init() {
+    async init() {
+        // 先获取配置
+        await this.loadConfig();
+        
         this.bindEvents();
         this.initTheme();
         this.initPlayer();
@@ -41,6 +44,24 @@ const AudioApp = {
         this.loadGlobalPlaylist().catch(error => {
             console.log('预加载全局播放列表失败:', error);
         });
+    },
+    
+    // 加载配置
+    async loadConfig() {
+        try {
+            const response = await fetch('/api/audio_config');
+            const data = await response.json();
+            if (data.status === 'success') {
+                this.state.audioPerPage = data.data.audioPerPage;
+                console.log(`从配置获取到每页显示音频数量: ${this.state.audioPerPage}`);
+            } else {
+                console.warn('获取音频配置失败，使用默认值50');
+                this.state.audioPerPage = 50;
+            }
+        } catch (error) {
+            console.error('获取音频配置出错:', error);
+            this.state.audioPerPage = 50;
+        }
     },
     
     // 绑定事件
@@ -344,6 +365,13 @@ const AudioApp = {
     async loadRecommendedAlbums() {
         try {
             const response = await fetch('/api/audio_collections?page=1&per_page=8');
+            
+            // 检查403权限错误
+            if (response.status === 403) {
+                window.location.href = `/error?code=403&title=访问权限不足&message=抱歉，您没有权限访问音频集`;
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -360,6 +388,13 @@ const AudioApp = {
         try {
             // 从专辑中获取最新歌曲
             const response = await fetch('/api/audio_collections?page=1&per_page=5');
+            
+            // 检查403权限错误
+            if (response.status === 403) {
+                window.location.href = `/error?code=403&title=访问权限不足&message=抱歉，您没有权限访问音频集`;
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -401,6 +436,13 @@ const AudioApp = {
             }
             
             const response = await fetch(url);
+            
+            // 检查403权限错误
+            if (response.status === 403) {
+                window.location.href = `/error?code=403&title=访问权限不足&message=抱歉，您没有权限访问音频集`;
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -417,6 +459,13 @@ const AudioApp = {
     async loadAllTracks(page = 1) {
         try {
             const response = await fetch('/api/audio_collections?page=1&per_page=100');
+            
+            // 检查403权限错误
+            if (response.status === 403) {
+                window.location.href = `/error?code=403&title=访问权限不足&message=抱歉，您没有权限访问音频集`;
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -454,7 +503,7 @@ const AudioApp = {
                 }
                 
                 // 分页
-                const perPage = 50;
+                const perPage = this.state.audioPerPage;
                 const startIndex = (page - 1) * perPage;
                 const endIndex = startIndex + perPage;
                 const paginatedTracks = filteredTracks.slice(startIndex, endIndex);
@@ -506,11 +555,17 @@ const AudioApp = {
             const albumCard = document.createElement('div');
             albumCard.className = 'album-card';
             albumCard.innerHTML = `
-                <img class="album-cover" src="${album.cover_path || '/static/images/default.jpg'}" alt="${album.collection_name}">
+                <img class="album-cover" src="/static/images/default.jpg" alt="${album.collection_name}">
                 <div class="album-title">${album.collection_name}</div>
                 <div class="album-artist">${album.artist || '未知艺术家'}</div>
                 <div class="album-stats">${album.audio_count || 0} 首歌曲</div>
             `;
+            
+            // 🎵 使用新的封面获取策略
+            const coverElement = albumCard.querySelector('.album-cover');
+            if (coverElement) {
+                this.getAlbumCover(album, coverElement);
+            }
             
             albumCard.addEventListener('click', () => this.showAlbumDetail(album.collection_id));
             container.appendChild(albumCard);
@@ -537,6 +592,9 @@ const AudioApp = {
             trackItem.className = 'track-item';
         trackItem.innerHTML = `
             <div class="track-number">${index + 1}</div>
+            <div class="track-cover">
+                <img src="/static/images/default.jpg" alt="${track.title || '音频封面'}" class="track-cover-img">
+            </div>
             <div class="track-info">
                 <div class="track-title">${track.title || '未知标题'}</div>
                 <div class="track-artist">${track.artist || '未知艺术家'}</div>
@@ -548,6 +606,12 @@ const AudioApp = {
                     </button>
                 </div>
             `;
+            
+            // 🎵 为每首音频提取封面图片
+            const coverImg = trackItem.querySelector('.track-cover-img');
+            if (coverImg && track.relative_path) {
+                this.extractTrackCover(track, coverImg);
+            }
             
             // 🎯 添加点击事件，需要根据当前视图设置正确的上下文
             trackItem.addEventListener('click', () => {
@@ -562,6 +626,13 @@ const AudioApp = {
     async showAlbumDetail(albumId) {
         try {
             const response = await fetch(`/api/audio_collection/${albumId}`);
+            
+            // 检查403权限错误
+            if (response.status === 403) {
+                window.location.href = `/error?code=403&title=访问权限不足&message=抱歉，您没有权限查看此VIP音频集`;
+                return;
+            }
+            
             const data = await response.json();
             
             if (data.status === 'success') {
@@ -586,7 +657,10 @@ const AudioApp = {
                     albumTrackCount: document.getElementById('albumTrackCount')
                 };
                 
-                if (elements.albumCover) elements.albumCover.src = album.cover_path || '/static/images/default.jpg';
+                // 🎵 使用新的封面获取策略
+                if (elements.albumCover) {
+                    this.getAlbumCover(album, elements.albumCover);
+                }
                 if (elements.albumTitle) elements.albumTitle.textContent = album.collection_name;
                 if (elements.albumArtist) elements.albumArtist.textContent = album.artist || '未知艺术家';
                 if (elements.albumTrackCount) elements.albumTrackCount.textContent = `${album.audio_count || 0} 首歌曲`;
@@ -777,7 +851,14 @@ const AudioApp = {
             await new Promise(resolve => setTimeout(resolve, 50));
             
             // 设置音频源
-            this.audioPlayer.src = `/audios/${track.relative_path}`;
+            const audioPath = `/audios/${track.relative_path}`;
+            this.audioPlayer.src = audioPath;
+            
+            // 立即尝试提取音频封面（不阻塞播放）
+            const coverElement = document.getElementById('currentTrackCover');
+            if (coverElement) {
+                this.extractAudioCover(audioPath, coverElement);
+            }
             
             // 等待音频准备就绪
             await new Promise((resolve, reject) => {
@@ -834,9 +915,17 @@ const AudioApp = {
             artist: document.getElementById('currentTrackArtist')
         };
         
+        // 设置默认封面和基本信息
         if (elements.cover) elements.cover.src = track.albumCover || '/static/images/default.jpg';
         if (elements.title) elements.title.textContent = track.title || '未知标题';
         if (elements.artist) elements.artist.textContent = track.artist || '未知艺术家';
+        
+        // 设置页面title为音频名称
+        const trackTitle = track.title || '未知标题';
+        const trackArtist = track.artist || '未知艺术家';
+        document.title = `${trackTitle} - ${trackArtist} | 溯音台`;
+        
+        // 注意：封面提取已在playCurrentTrack中处理，避免重复调用
     },
     
     // 🎯 获取当前播放列表的上下文信息
@@ -855,7 +944,7 @@ const AudioApp = {
                 context.type = 'all-tracks';
                 context.fullPlaylist = this.state.allFilteredTracks;
                 // 计算分页信息
-                const perPage = 50;
+                const perPage = this.state.audioPerPage;
                 context.totalPages = Math.ceil(this.state.allFilteredTracks.length / perPage);
                 // 通过当前显示的歌曲推算当前页码
                 if (currentPageTracks.length > 0 && this.state.allFilteredTracks.length > 0) {
@@ -1309,7 +1398,7 @@ const AudioApp = {
         switch (context.type) {
             case 'all-tracks':
                 // 计算目标歌曲所在的页码
-                const perPage = 50;
+                const perPage = this.state.audioPerPage;
                 const targetPage = Math.floor(globalIndex / perPage) + 1;
                 
                 if (targetPage !== context.currentPage) {
@@ -1592,7 +1681,7 @@ const AudioApp = {
             if (allTracks.length === 0) return false;
             
             // 🎯 使用与loadAllTracks相同的分页逻辑
-            const perPage = 50;
+            const perPage = this.state.audioPerPage;
             const startIndex = (page - 1) * perPage;
             const endIndex = startIndex + perPage;
             
@@ -2026,12 +2115,877 @@ const AudioApp = {
                 }
             }, 300);
         }, 3000);
+    },
+    
+    // 🎵 从音频文件元数据中提取封面图片
+    async extractAudioCover(audioPath, coverElement) {
+        try {
+            console.log('🎵 开始提取音频封面:', audioPath);
+            
+            // 方法1: 使用现代浏览器的MediaSession API
+            const cover = await this.extractCoverModern(audioPath);
+            if (cover) {
+                console.log('✅ 成功提取到音频封面，URL:', cover);
+                
+                // 验证图片是否可以正常加载
+                const isValid = await this.validateImageUrl(cover);
+                if (isValid) {
+                    console.log('✅ 图片验证成功，设置封面');
+                    coverElement.src = cover;
+                    return;
+                } else {
+                    console.log('❌ 图片验证失败，使用默认封面');
+                    // 清理无效的Blob URL
+                    URL.revokeObjectURL(cover);
+                }
+            }
+            
+            console.log('❌ 未能从音频文件中提取到封面图片');
+            
+        } catch (error) {
+            console.error('❌ 提取音频封面时出错:', error);
+        }
+    },
+    
+    // 现代方法：使用MediaSession API和ID3解析
+    async extractCoverModern(audioPath) {
+        return new Promise((resolve) => {
+            try {
+                console.log('🔍 开始现代方法提取封面:', audioPath);
+                
+                // 创建临时音频元素
+                const audio = new Audio();
+                audio.crossOrigin = 'anonymous';
+                
+                // 设置MediaSession元数据（如果支持）
+                if ('mediaSession' in navigator) {
+                    navigator.mediaSession.metadata = new MediaMetadata({
+                        title: '正在提取封面...',
+                        artist: '',
+                        album: '',
+                        artwork: []
+                    });
+                }
+                
+                // 监听元数据加载事件
+                audio.addEventListener('loadedmetadata', async () => {
+                    try {
+                        console.log('📻 音频元数据已加载');
+                        
+                        // 方法1: 尝试从MediaSession获取封面
+                        if (navigator.mediaSession.metadata && navigator.mediaSession.metadata.artwork) {
+                            const artwork = navigator.mediaSession.metadata.artwork[0];
+                            if (artwork && artwork.src) {
+                                console.log('🎨 从MediaSession获取到封面:', artwork.src);
+                                resolve(artwork.src);
+                                return;
+                            }
+                        }
+                        
+                        // 方法2: 尝试解析ID3标签
+                        console.log('🔍 尝试解析ID3标签...');
+                        const response = await fetch(audioPath);
+                        const arrayBuffer = await response.arrayBuffer();
+                        console.log('📦 获取到音频数据，大小:', arrayBuffer.byteLength, '字节');
+                        
+                        const cover = this.parseID3Cover(arrayBuffer);
+                        
+                        if (cover) {
+                            console.log('✅ ID3解析成功，封面URL:', cover);
+                            resolve(cover);
+                            return;
+                        }
+                        
+                        console.log('❌ 未找到封面数据');
+                        resolve(null);
+                        
+                    } catch (error) {
+                        console.error('❌ 提取封面失败:', error);
+                        resolve(null);
+                    }
+                });
+                
+                // 监听错误事件
+                audio.addEventListener('error', (e) => {
+                    console.error('❌ 音频加载错误:', e);
+                    resolve(null);
+                });
+                
+                // 设置音频源
+                audio.src = audioPath;
+                
+                // 超时处理
+                setTimeout(() => {
+                    console.log('⏰ 封面提取超时');
+                    resolve(null);
+                }, 3000);
+                
+            } catch (error) {
+                console.error('❌ 现代方法提取封面失败:', error);
+                resolve(null);
+            }
+        });
+    },
+    
+    // 解析音频文件中的封面图片 - 增强版本
+    parseID3Cover(arrayBuffer) {
+        try {
+            const uint8Array = new Uint8Array(arrayBuffer);
+            console.log('🔍 开始解析音频数据，总大小:', uint8Array.length, '字节');
+            
+            // 查找ID3v2标签
+            if (this.hasID3v2Tag(uint8Array)) {
+                console.log('📋 检测到ID3v2标签');
+                const cover = this.extractID3v2Cover(uint8Array);
+                if (cover) {
+                    console.log('✅ ID3v2封面提取成功');
+                    return cover;
+                } else {
+                    console.log('❌ ID3v2封面提取失败');
+                }
+            }
+            
+            // 查找APE标签（常见于FLAC、APE等格式）
+            if (this.hasAPETag(uint8Array)) {
+                console.log('📋 检测到APE标签');
+                const cover = this.extractAPECover(uint8Array);
+                if (cover) {
+                    console.log('✅ APE封面提取成功');
+                    return cover;
+                } else {
+                    console.log('❌ APE封面提取失败');
+                }
+            }
+            
+            // 查找FLAC元数据块
+            if (this.hasFLACMetadata(uint8Array)) {
+                console.log('📋 检测到FLAC元数据');
+                const cover = this.extractFLACCover(uint8Array);
+                if (cover) {
+                    console.log('✅ FLAC封面提取成功');
+                    return cover;
+                } else {
+                    console.log('❌ FLAC封面提取失败');
+                }
+            }
+            
+            // 查找MP4/M4A元数据
+            if (this.hasMP4Metadata(uint8Array)) {
+                console.log('📋 检测到MP4元数据');
+                const cover = this.extractMP4Cover(uint8Array);
+                if (cover) {
+                    console.log('✅ MP4封面提取成功');
+                    return cover;
+                } else {
+                    console.log('❌ MP4封面提取失败');
+                }
+            }
+            
+            // 尝试在整个文件中搜索图片数据
+            console.log('🔍 尝试在整个文件中搜索图片数据...');
+            const cover = this.searchForEmbeddedImages(uint8Array);
+            if (cover) {
+                console.log('✅ 在文件中找到嵌入的图片');
+                return cover;
+            }
+            
+            console.log('❌ 未找到任何封面图片');
+            return null;
+            
+        } catch (error) {
+            console.error('❌ 解析音频文件失败:', error);
+            return null;
+        }
+    },
+    
+    // 检查是否有ID3v2标签
+    hasID3v2Tag(uint8Array) {
+        const id3Header = String.fromCharCode(...uint8Array.slice(0, 3));
+        return id3Header === 'ID3';
+    },
+    
+    // 检查是否有ID3v1标签
+    hasID3v1Tag(uint8Array) {
+        if (uint8Array.length < 128) return false;
+        const id3v1Header = String.fromCharCode(...uint8Array.slice(uint8Array.length - 128, uint8Array.length - 125));
+        return id3v1Header === 'TAG';
+    },
+    
+    // 检查是否有MP4元数据
+    hasMP4Metadata(uint8Array) {
+        // 查找MP4文件签名
+        const mp4Signature = String.fromCharCode(...uint8Array.slice(4, 8));
+        return mp4Signature === 'ftyp';
+    },
+    
+    // 提取ID3v2封面
+    extractID3v2Cover(uint8Array) {
+        try {
+            console.log('🔍 开始提取ID3v2封面...');
+            
+            // 跳过ID3v2头部(10字节)
+            let offset = 10;
+            
+            // 解析标签大小
+            const size = (uint8Array[6] << 21) | (uint8Array[7] << 14) | (uint8Array[8] << 7) | uint8Array[9];
+            console.log('📏 ID3v2标签大小:', size, '字节');
+            
+            while (offset < size + 10) {
+                if (offset + 4 > uint8Array.length) {
+                    console.log('⚠️ 超出数据范围，停止解析');
+                    break;
+                }
+                
+                // 读取帧ID
+                const frameId = String.fromCharCode(...uint8Array.slice(offset, offset + 4));
+                offset += 4;
+                
+                if (offset + 4 > uint8Array.length) break;
+                
+                // 读取帧大小
+                const frameSize = (uint8Array[offset] << 24) | (uint8Array[offset + 1] << 16) | 
+                                 (uint8Array[offset + 2] << 8) | uint8Array[offset + 3];
+                offset += 4;
+                
+                // 跳过标志位
+                offset += 2;
+                
+                console.log('📋 发现帧:', frameId, '大小:', frameSize, '字节');
+                
+                // 检查是否是APIC帧(封面图片)
+                if (frameId === 'APIC') {
+                    console.log('🎨 找到APIC帧(封面图片)');
+                    
+                    let dataOffset = offset;
+                    
+                    // 解析APIC帧结构 - 修正版本
+                    console.log('🔍 开始解析APIC帧，帧大小:', frameSize, '字节');
+                    
+                    // 1. 文本编码 (1字节)
+                    if (dataOffset >= offset + frameSize) {
+                        console.log('❌ 数据偏移超出范围');
+                        return null;
+                    }
+                    const textEncoding = uint8Array[dataOffset];
+                    dataOffset++;
+                    console.log('📝 文本编码:', textEncoding);
+                    
+                    // 2. MIME类型 (以null结尾的字符串)
+                    let mimeStart = dataOffset;
+                    let mimeEnd = dataOffset;
+                    while (mimeEnd < offset + frameSize && uint8Array[mimeEnd] !== 0) {
+                        mimeEnd++;
+                    }
+                    if (mimeEnd >= offset + frameSize) {
+                        console.log('❌ MIME类型字符串未找到结束符');
+                        return null;
+                    }
+                    const mimeType = String.fromCharCode(...uint8Array.slice(mimeStart, mimeEnd));
+                    dataOffset = mimeEnd + 1; // 跳过null字节
+                    console.log('🎭 MIME类型:', mimeType);
+                    
+                    // 3. 图片类型 (1字节)
+                    if (dataOffset >= offset + frameSize) {
+                        console.log('❌ 无法读取图片类型');
+                        return null;
+                    }
+                    const pictureType = uint8Array[dataOffset];
+                    dataOffset++;
+                    console.log('🖼️ 图片类型:', pictureType);
+                    
+                    // 4. 描述 (以null结尾的字符串)
+                    let descStart = dataOffset;
+                    let descEnd = dataOffset;
+                    while (descEnd < offset + frameSize && uint8Array[descEnd] !== 0) {
+                        descEnd++;
+                    }
+                    if (descEnd >= offset + frameSize) {
+                        console.log('❌ 描述字符串未找到结束符');
+                        return null;
+                    }
+                    const description = String.fromCharCode(...uint8Array.slice(descStart, descEnd));
+                    dataOffset = descEnd + 1; // 跳过null字节
+                    console.log('📄 描述:', description);
+                    
+                    // 5. 图片数据 (剩余的字节)
+                    if (dataOffset >= offset + frameSize) {
+                        console.log('❌ 没有剩余数据作为图片');
+                        return null;
+                    }
+                    const imageData = uint8Array.slice(dataOffset, offset + frameSize);
+                    console.log('🖼️ 图片数据起始位置:', dataOffset, '结束位置:', offset + frameSize);
+                    console.log('🖼️ 实际图片数据大小:', imageData.length, '字节');
+                    console.log('🖼️ 提取到图片数据，大小:', imageData.length, '字节');
+                    console.log('🖼️ 图片数据起始字节:', Array.from(imageData.slice(0, 10)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' '));
+                    
+                    // 检查图片数据是否有效
+                    if (imageData.length === 0) {
+                        console.log('❌ 图片数据为空');
+                        return null;
+                    }
+                    
+                    // 检查图片格式并尝试修正数据
+                    let finalImageData = imageData;
+                    let finalMimeType = mimeType || 'image/jpeg';
+                    
+                    // 如果APIC声明的格式与实际检测不符，尝试修正
+                    if (mimeType && mimeType !== 'image/jpeg') {
+                        console.log('🔄 APIC声明格式与实际数据不符，尝试修正...');
+                        const detectedMimeType = this.detectImageMimeType(imageData);
+                        console.log('🖼️ 检测到图片格式:', detectedMimeType);
+                        console.log('🖼️ APIC声明格式:', mimeType);
+                        
+                        // 如果检测到UTF-16编码问题，尝试修正数据
+                        if (imageData[0] === 0x53 && imageData[1] === 0x00 && imageData[2] === 0x4D && imageData[3] === 0x00) {
+                            console.log('🔄 检测到UTF-16编码问题，尝试修正数据...');
+                            for (let i = 0; i < imageData.length - 4; i++) {
+                                // 查找JPEG标记
+                                if (imageData[i] === 0xFF && imageData[i + 1] === 0xD8 && imageData[i + 2] === 0xFF) {
+                                    console.log('✅ 在偏移', i, '处找到JPEG标记，修正数据');
+                                    finalImageData = imageData.slice(i);
+                                    finalMimeType = 'image/jpeg';
+                                    break;
+                                }
+                                // 查找PNG标记
+                                if (imageData[i] === 0x89 && imageData[i + 1] === 0x50 && imageData[i + 2] === 0x4E && imageData[i + 3] === 0x47) {
+                                    console.log('✅ 在偏移', i, '处找到PNG标记，修正数据');
+                                    finalImageData = imageData.slice(i);
+                                    finalMimeType = 'image/png';
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        const detectedMimeType = this.detectImageMimeType(imageData);
+                        finalMimeType = mimeType || detectedMimeType;
+                    }
+                    
+                    console.log('🎯 最终使用的MIME类型:', finalMimeType);
+                    console.log('🎯 最终图片数据大小:', finalImageData.length, '字节');
+                    
+                    try {
+                        const blob = new Blob([finalImageData], { type: finalMimeType });
+                        const url = URL.createObjectURL(blob);
+                        console.log('✅ 成功创建Blob URL:', url);
+                        return url;
+                    } catch (blobError) {
+                        console.error('❌ 创建Blob失败:', blobError);
+                        return null;
+                    }
+                }
+                
+                offset += frameSize;
+            }
+            
+            console.log('❌ 未找到APIC帧');
+            return null;
+            
+        } catch (error) {
+            console.error('❌ 提取ID3v2封面失败:', error);
+            return null;
+        }
+    },
+    
+    // 提取ID3v1封面 (ID3v1通常不包含封面)
+    extractID3v1Cover(uint8Array) {
+        // ID3v1标签不包含封面图片，返回null
+        return null;
+    },
+    
+    // 提取MP4封面
+    extractMP4Cover(uint8Array) {
+        try {
+            console.log('🔍 开始提取MP4封面...');
+            
+            // 简化的MP4元数据解析
+            // 查找covr原子(封面)
+            for (let i = 0; i < uint8Array.length - 8; i++) {
+                const atomSize = (uint8Array[i] << 24) | (uint8Array[i + 1] << 16) | 
+                                (uint8Array[i + 2] << 8) | uint8Array[i + 3];
+                const atomType = String.fromCharCode(...uint8Array.slice(i + 4, i + 8));
+                
+                if (atomType === 'covr' && atomSize > 8) {
+                    console.log('🎨 找到covr原子(封面)');
+                    
+                    // 提取封面数据
+                    const imageData = uint8Array.slice(i + 8, i + atomSize);
+                    console.log('🖼️ 提取到MP4图片数据，大小:', imageData.length, '字节');
+                    
+                    // 检查图片数据是否有效
+                    if (imageData.length === 0) {
+                        console.log('❌ MP4图片数据为空');
+                        return null;
+                    }
+                    
+                    // 检查图片格式
+                    const mimeType = this.detectImageMimeType(imageData);
+                    console.log('🖼️ 检测到MP4图片格式:', mimeType);
+                    
+                    try {
+                        const blob = new Blob([imageData], { type: mimeType });
+                        const url = URL.createObjectURL(blob);
+                        console.log('✅ 成功创建MP4 Blob URL:', url);
+                        return url;
+                    } catch (blobError) {
+                        console.error('❌ 创建MP4 Blob失败:', blobError);
+                        return null;
+                    }
+                }
+            }
+            
+            console.log('❌ 未找到covr原子');
+            return null;
+            
+        } catch (error) {
+            console.error('❌ 提取MP4封面失败:', error);
+            return null;
+        }
+    },
+    
+    // 检查是否有APE标签
+    hasAPETag(uint8Array) {
+        try {
+            // APE标签通常在文件末尾
+            if (uint8Array.length < 32) return false;
+            
+            // 检查文件末尾的APE标签标识
+            const apeHeader = String.fromCharCode(...uint8Array.slice(uint8Array.length - 32, uint8Array.length - 24));
+            return apeHeader === 'APETAGEX';
+        } catch (error) {
+            return false;
+        }
+    },
+    
+    // 检查是否有FLAC元数据
+    hasFLACMetadata(uint8Array) {
+        try {
+            // FLAC文件头标识
+            const flacHeader = String.fromCharCode(...uint8Array.slice(0, 4));
+            return flacHeader === 'fLaC';
+        } catch (error) {
+            return false;
+        }
+    },
+    
+    // 提取APE标签中的封面
+    extractAPECover(uint8Array) {
+        try {
+            console.log('🔍 开始提取APE封面...');
+            // APE标签解析比较复杂，这里提供基础实现
+            // 实际项目中可能需要更完整的APE标签解析
+            return null;
+        } catch (error) {
+            console.error('❌ 提取APE封面失败:', error);
+            return null;
+        }
+    },
+    
+    // 提取FLAC元数据中的封面
+    extractFLACCover(uint8Array) {
+        try {
+            console.log('🔍 开始提取FLAC封面...');
+            
+            let offset = 4; // 跳过"fLaC"标识
+            
+            while (offset < uint8Array.length) {
+                // 读取元数据块头
+                const blockHeader = uint8Array[offset];
+                const isLast = (blockHeader & 0x80) !== 0;
+                const blockType = blockHeader & 0x7F;
+                
+                // 读取块大小（24位大端序）
+                const blockSize = (uint8Array[offset + 1] << 16) | 
+                                 (uint8Array[offset + 2] << 8) | 
+                                 uint8Array[offset + 3];
+                
+                offset += 4; // 跳过块头
+                
+                console.log('📋 FLAC元数据块类型:', blockType, '大小:', blockSize);
+                
+                // 类型6是PICTURE块（封面图片）
+                if (blockType === 6) {
+                    console.log('🎨 找到FLAC PICTURE块');
+                    
+                    // 读取图片类型（4字节）
+                    const pictureType = (uint8Array[offset] << 24) | 
+                                       (uint8Array[offset + 1] << 16) | 
+                                       (uint8Array[offset + 2] << 8) | 
+                                       uint8Array[offset + 3];
+                    offset += 4;
+                    
+                    // 读取MIME类型长度（4字节）
+                    const mimeLength = (uint8Array[offset] << 24) | 
+                                      (uint8Array[offset + 1] << 16) | 
+                                      (uint8Array[offset + 2] << 8) | 
+                                      uint8Array[offset + 3];
+                    offset += 4;
+                    
+                    // 读取MIME类型
+                    const mimeType = String.fromCharCode(...uint8Array.slice(offset, offset + mimeLength));
+                    offset += mimeLength;
+                    console.log('🎭 FLAC MIME类型:', mimeType);
+                    
+                    // 跳过描述长度和描述
+                    const descLength = (uint8Array[offset] << 24) | 
+                                      (uint8Array[offset + 1] << 16) | 
+                                      (uint8Array[offset + 2] << 8) | 
+                                      uint8Array[offset + 3];
+                    offset += 4 + descLength;
+                    
+                    // 跳过宽度、高度、颜色深度、索引颜色数（16字节）
+                    offset += 16;
+                    
+                    // 读取图片数据长度
+                    const imageLength = (uint8Array[offset] << 24) | 
+                                       (uint8Array[offset + 1] << 16) | 
+                                       (uint8Array[offset + 2] << 8) | 
+                                       uint8Array[offset + 3];
+                    offset += 4;
+                    
+                    console.log('🖼️ FLAC图片数据大小:', imageLength, '字节');
+                    
+                    // 提取图片数据
+                    const imageData = uint8Array.slice(offset, offset + imageLength);
+                    
+                    if (imageData.length > 0) {
+                        const blob = new Blob([imageData], { type: mimeType });
+                        const url = URL.createObjectURL(blob);
+                        console.log('✅ 成功创建FLAC Blob URL:', url);
+                        return url;
+                    }
+                }
+                
+                offset += blockSize;
+                
+                if (isLast) break;
+            }
+            
+            console.log('❌ 未找到FLAC封面');
+            return null;
+            
+        } catch (error) {
+            console.error('❌ 提取FLAC封面失败:', error);
+            return null;
+        }
+    },
+    
+    // 在整个文件中搜索嵌入的图片
+    searchForEmbeddedImages(uint8Array) {
+        try {
+            console.log('🔍 开始搜索嵌入的图片数据...');
+            
+            // 搜索JPEG文件头
+            for (let i = 0; i < uint8Array.length - 10; i++) {
+                if (uint8Array[i] === 0xFF && uint8Array[i + 1] === 0xD8 && uint8Array[i + 2] === 0xFF) {
+                    console.log('🖼️ 在偏移', i, '处找到JPEG标记');
+                    
+                    // 查找JPEG文件结尾
+                    for (let j = i + 3; j < uint8Array.length - 1; j++) {
+                        if (uint8Array[j] === 0xFF && uint8Array[j + 1] === 0xD9) {
+                            console.log('🖼️ 在偏移', j + 2, '处找到JPEG结尾标记');
+                            
+                            const imageData = uint8Array.slice(i, j + 2);
+                            console.log('🖼️ 提取到JPEG图片，大小:', imageData.length, '字节');
+                            
+                            if (imageData.length > 1024) { // 至少1KB的图片
+                                const blob = new Blob([imageData], { type: 'image/jpeg' });
+                                const url = URL.createObjectURL(blob);
+                                console.log('✅ 成功创建搜索到的JPEG Blob URL:', url);
+                                return url;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // 搜索PNG文件头
+            for (let i = 0; i < uint8Array.length - 8; i++) {
+                if (uint8Array[i] === 0x89 && uint8Array[i + 1] === 0x50 && 
+                    uint8Array[i + 2] === 0x4E && uint8Array[i + 3] === 0x47 &&
+                    uint8Array[i + 4] === 0x0D && uint8Array[i + 5] === 0x0A && 
+                    uint8Array[i + 6] === 0x1A && uint8Array[i + 7] === 0x0A) {
+                    
+                    console.log('🖼️ 在偏移', i, '处找到PNG标记');
+                    
+                    // PNG文件结构更复杂，这里提供简化版本
+                    // 查找IEND块（PNG结尾标记）
+                    for (let j = i + 8; j < uint8Array.length - 8; j++) {
+                        if (uint8Array[j] === 0x00 && uint8Array[j + 1] === 0x00 && 
+                            uint8Array[j + 2] === 0x00 && uint8Array[j + 3] === 0x00 &&
+                            uint8Array[j + 4] === 0x49 && uint8Array[j + 5] === 0x45 && 
+                            uint8Array[j + 6] === 0x4E && uint8Array[j + 7] === 0x44) {
+                            
+                            console.log('🖼️ 在偏移', j + 12, '处找到PNG IEND标记');
+                            
+                            const imageData = uint8Array.slice(i, j + 12);
+                            console.log('🖼️ 提取到PNG图片，大小:', imageData.length, '字节');
+                            
+                            if (imageData.length > 1024) { // 至少1KB的图片
+                                const blob = new Blob([imageData], { type: 'image/png' });
+                                const url = URL.createObjectURL(blob);
+                                console.log('✅ 成功创建搜索到的PNG Blob URL:', url);
+                                return url;
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            console.log('❌ 未在文件中找到图片数据');
+            return null;
+            
+        } catch (error) {
+            console.error('❌ 搜索嵌入图片失败:', error);
+            return null;
+        }
+    },
+    
+    // 检测图片MIME类型
+    detectImageMimeType(imageData) {
+        try {
+            if (imageData.length < 4) {
+                console.log('⚠️ 图片数据太短，无法检测格式');
+                return 'image/jpeg';
+            }
+            
+            // 显示前几个字节用于调试
+            const hexBytes = Array.from(imageData.slice(0, 16)).map(b => '0x' + b.toString(16).padStart(2, '0')).join(' ');
+            console.log('🔍 图片数据前16字节:', hexBytes);
+            
+            // 显示ASCII字符（用于调试）
+            const asciiChars = Array.from(imageData.slice(0, 16)).map(b => {
+                return (b >= 32 && b <= 126) ? String.fromCharCode(b) : '.';
+            }).join('');
+            console.log('🔍 ASCII字符:', asciiChars);
+            
+            // 检查JPEG格式 (FF D8 FF)
+            if (imageData[0] === 0xFF && imageData[1] === 0xD8 && imageData[2] === 0xFF) {
+                console.log('✅ 检测为JPEG格式');
+                return 'image/jpeg';
+            }
+            
+            // 检查PNG格式 (89 50 4E 47 0D 0A 1A 0A)
+            if (imageData[0] === 0x89 && imageData[1] === 0x50 && imageData[2] === 0x4E && imageData[3] === 0x47 &&
+                imageData[4] === 0x0D && imageData[5] === 0x0A && imageData[6] === 0x1A && imageData[7] === 0x0A) {
+                console.log('✅ 检测为PNG格式');
+                return 'image/png';
+            }
+            
+            // 检查GIF格式 (47 49 46)
+            if (imageData[0] === 0x47 && imageData[1] === 0x49 && imageData[2] === 0x46) {
+                console.log('✅ 检测为GIF格式');
+                return 'image/gif';
+            }
+            
+            // 检查WebP格式
+            if (imageData.length >= 12 &&
+                imageData[0] === 0x52 && imageData[1] === 0x49 && imageData[2] === 0x46 && imageData[3] === 0x46 &&
+                imageData[8] === 0x57 && imageData[9] === 0x45 && imageData[10] === 0x42 && imageData[11] === 0x50) {
+                console.log('✅ 检测为WebP格式');
+                return 'image/webp';
+            }
+            
+            // 检查BMP格式 (42 4D)
+            if (imageData[0] === 0x42 && imageData[1] === 0x4D) {
+                console.log('✅ 检测为BMP格式');
+                return 'image/bmp';
+            }
+            
+            // 检查是否有UTF-16编码问题（常见于Windows系统）
+            if (imageData[0] === 0x53 && imageData[1] === 0x00 && imageData[2] === 0x4D && imageData[3] === 0x00) {
+                console.log('⚠️ 检测到可能的UTF-16编码问题，尝试跳过前导字节');
+                // 尝试跳过可能的UTF-16 BOM或其他编码标记
+                for (let i = 0; i < imageData.length - 4; i++) {
+                    // 查找JPEG标记
+                    if (imageData[i] === 0xFF && imageData[i + 1] === 0xD8 && imageData[i + 2] === 0xFF) {
+                        console.log('✅ 在偏移', i, '处找到JPEG标记');
+                        const correctedData = imageData.slice(i);
+                        console.log('🔄 使用修正后的数据，大小:', correctedData.length, '字节');
+                        return this.detectImageMimeType(correctedData);
+                    }
+                    // 查找PNG标记
+                    if (imageData[i] === 0x89 && imageData[i + 1] === 0x50 && imageData[i + 2] === 0x4E && imageData[i + 3] === 0x47) {
+                        console.log('✅ 在偏移', i, '处找到PNG标记');
+                        const correctedData = imageData.slice(i);
+                        console.log('🔄 使用修正后的数据，大小:', correctedData.length, '字节');
+                        return this.detectImageMimeType(correctedData);
+                    }
+                }
+            }
+            
+            // 未知格式，尝试作为JPEG处理
+            console.log('⚠️ 无法检测图片格式，尝试作为JPEG处理');
+            return 'image/jpeg';
+            
+        } catch (error) {
+            console.error('❌ 检测图片格式失败:', error);
+            return 'image/jpeg';
+        }
+    },
+    
+    // 验证图片URL是否可以正常加载
+    validateImageUrl(imageUrl) {
+        return new Promise((resolve) => {
+            try {
+                console.log('🔍 开始验证图片URL:', imageUrl);
+                const img = new Image();
+                
+                img.onload = () => {
+                    console.log('✅ 图片加载成功！');
+                    console.log('📐 图片尺寸:', img.width, 'x', img.height);
+                    console.log('🎨 图片来源:', img.src.substring(0, 50) + '...');
+                    resolve(true);
+                };
+                
+                img.onerror = (event) => {
+                    console.log('❌ 图片加载失败！');
+                    console.log('❌ 错误事件:', event);
+                    console.log('❌ 图片URL:', imageUrl);
+                    resolve(false);
+                };
+                
+                // 设置超时
+                const timeout = setTimeout(() => {
+                    console.log('⏰ 图片加载超时（5秒）');
+                    img.src = ''; // 停止加载
+                    resolve(false);
+                }, 5000);
+                
+                // 清除超时
+                img.onload = () => {
+                    clearTimeout(timeout);
+                    console.log('✅ 图片加载成功！');
+                    console.log('📐 图片尺寸:', img.width, 'x', img.height);
+                    resolve(true);
+                };
+                
+                img.onerror = (event) => {
+                    clearTimeout(timeout);
+                    console.log('❌ 图片加载失败！');
+                    console.log('❌ 错误详情:', event);
+                    resolve(false);
+                };
+                
+                console.log('🔄 开始加载图片...');
+                img.src = imageUrl;
+                
+            } catch (error) {
+                console.error('❌ 图片验证过程中发生异常:', error);
+                resolve(false);
+            }
+        });
+    },
+    
+    // 🎵 获取专辑封面（分层策略）
+    async getAlbumCover(album, coverElement) {
+        try {
+            console.log('🎵 开始获取专辑封面:', album.collection_name);
+            
+            // 1. 默认显示默认图片
+            const defaultCover = '/static/images/default.jpg';
+            coverElement.src = defaultCover;
+            
+            // 2. 尝试获取后端存储的专辑封面
+            if (album.cover_path && album.cover_path !== defaultCover && album.cover_path !== '/static/images/default-album.jpg') {
+                console.log('🔍 尝试加载后端封面:', album.cover_path);
+                const isValidBackendCover = await this.validateImageUrl(album.cover_path);
+                if (isValidBackendCover) {
+                    console.log('✅ 后端封面加载成功');
+                    coverElement.src = album.cover_path;
+                    return;
+                } else {
+                    console.log('❌ 后端封面加载失败，尝试音频封面');
+                }
+            }
+            
+            // 3. 尝试从专辑内第一首音频提取封面
+            if (album.tracks && album.tracks.length > 0) {
+                const firstTrack = album.tracks[0];
+                if (firstTrack.relative_path) {
+                    console.log('🎵 尝试从第一首音频提取封面:', firstTrack.title);
+                    const audioPath = `/audios/${firstTrack.relative_path}`;
+                    await this.extractAudioCover(audioPath, coverElement);
+                    
+                    // 检查是否成功提取到封面（通过比较src是否改变）
+                    if (coverElement.src !== defaultCover) {
+                        console.log('✅ 音频封面提取成功');
+                        return;
+                    }
+                }
+            } else if (album.first_track && album.first_track.relative_path) {
+                // 专辑列表页面，使用first_track信息
+                console.log('🎵 尝试从专辑列表第一首音频提取封面:', album.first_track.title);
+                const audioPath = `/audios/${album.first_track.relative_path}`;
+                await this.extractAudioCover(audioPath, coverElement);
+                
+                // 检查是否成功提取到封面（通过比较src是否改变）
+                if (coverElement.src !== defaultCover) {
+                    console.log('✅ 音频封面提取成功');
+                    return;
+                }
+            }
+            
+            // 4. 保持默认图片
+            console.log('📋 使用默认封面图片');
+            coverElement.src = defaultCover;
+            
+        } catch (error) {
+            console.error('❌ 获取专辑封面时出错:', error);
+            coverElement.src = defaultCover;
+        }
+    },
+    
+    // 🎵 提取单首音频的封面图片
+    async extractTrackCover(track, coverElement) {
+        try {
+            console.log('🎵 开始提取音频封面:', track.title);
+            
+            // 1. 默认显示默认图片
+            const defaultCover = '/static/images/default.jpg';
+            coverElement.src = defaultCover;
+            
+            // 2. 尝试从音频文件提取封面
+            if (track.relative_path) {
+                const audioPath = `/audios/${track.relative_path}`;
+                console.log('🎵 尝试从音频文件提取封面:', audioPath);
+                
+                // 使用现有的音频封面提取方法
+                await this.extractAudioCover(audioPath, coverElement);
+                
+                // 检查是否成功提取到封面（通过比较src是否改变）
+                if (coverElement.src !== defaultCover) {
+                    console.log('✅ 音频封面提取成功:', track.title);
+                    return;
+                }
+            }
+            
+            // 3. 如果音频没有封面，尝试使用专辑封面
+            if (track.albumCover) {
+                console.log('🎵 尝试使用专辑封面:', track.albumCover);
+                const isValidAlbumCover = await this.validateImageUrl(track.albumCover);
+                if (isValidAlbumCover) {
+                    console.log('✅ 专辑封面加载成功');
+                    coverElement.src = track.albumCover;
+                    return;
+                }
+            }
+            
+            // 4. 保持默认图片
+            console.log('📋 使用默认封面图片');
+            coverElement.src = defaultCover;
+            
+        } catch (error) {
+            console.error('❌ 提取音频封面时出错:', error);
+            coverElement.src = '/static/images/default.jpg';
+        }
     }
 };
 
 // 页面加载完成后初始化应用
-document.addEventListener('DOMContentLoaded', () => {
-    AudioApp.init();
+document.addEventListener('DOMContentLoaded', async () => {
+    await AudioApp.init();
 });
 
 // 导出到全局作用域供调试使用

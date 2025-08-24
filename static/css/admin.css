@@ -4,6 +4,10 @@
     --primary-color: #5a9de2;
     --primary-hover: #4a8bd1;
     --success-color: #10b981;
+    --input-border-color: #333333;
+    --input-title-color: #7dd3fc;
+    --input-text-color: #7dd3fc;
+    --input-focus-border: #7dd3fc;
     --warning-color: #f59e0b;
     --danger-color: #ef4444;
     --purple-color: #8b5cf6;
@@ -342,7 +346,7 @@ body {
 
 .section-header {
     margin-bottom: 24px;
-    padding-bottom: 16px;
+    padding: 0 24px 16px 24px;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -412,10 +416,9 @@ body {
 }
 
 .config-item input:hover {
-    border-color: var(--primary-color);
+    border-color: var(--text-secondary);
     background: var(--background-light);
-    box-shadow: 0 0 0 2px rgba(90, 157, 226, 0.1);
-    transform: translateY(-1px);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 /* 输入帮助文本 */
@@ -428,61 +431,60 @@ body {
 }
 
 .config-item input:focus {
-    border-color: var(--primary-color);
+    border-color: var(--input-focus-border);
     background: var(--background-light);
-    box-shadow: 0 0 0 3px rgba(90, 157, 226, 0.3);
-    transform: translateY(-2px);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
     outline: none;
 }
 
 .config-item input:focus::placeholder {
-    color: var(--primary-color);
+    color: var(--input-text-color);
     opacity: 0.7;
 }
 
 /* 视频管理输入框特定样式 */
 #videoScanDir, #thumbnailDir {
-    border-left: 4px solid #5a9de2;
+    border-left: 3px solid var(--primary-color) !important;
 }
 
 #videoScanDir:hover, #thumbnailDir:hover {
-    border-left-color: #4a8bd1;
-    box-shadow: 0 0 0 2px rgba(90, 157, 226, 0.1), 0 4px 8px rgba(90, 157, 226, 0.1);
+    border-left-color: var(--text-secondary);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 #videoScanDir:focus, #thumbnailDir:focus {
-    border-left-color: #4a8bd1;
-    box-shadow: 0 0 0 3px rgba(90, 157, 226, 0.3), 0 6px 12px rgba(90, 157, 226, 0.2);
+    border-left-color: var(--success-color);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 /* 图片管理输入框特定样式 */
 #imageBase {
-    border-left: 4px solid #10b981;
+    border-left: 3px solid var(--primary-color) !important;
 }
 
 #imageBase:hover {
-    border-left-color: #0ca975;
-    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1), 0 4px 8px rgba(16, 185, 129, 0.1);
+    border-left-color: var(--text-secondary);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 #imageBase:focus {
-    border-left-color: #0ca975;
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3), 0 6px 12px rgba(16, 185, 129, 0.2);
+    border-left-color: var(--success-color);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 /* 音频管理输入框特定样式 */
 #audioBase {
-    border-left: 4px solid #8b5cf6;
+    border-left: 3px solid var(--primary-color) !important;
 }
 
 #audioBase:hover {
-    border-left-color: #7c50d7;
-    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1), 0 4px 8px rgba(139, 92, 246, 0.1);
+    border-left-color: var(--text-secondary);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 #audioBase:focus {
-    border-left-color: #7c50d7;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3), 0 6px 12px rgba(139, 92, 246, 0.2);
+    border-left-color: var(--success-color);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 /* 输入框图标和增强效果 */
@@ -516,8 +518,8 @@ body {
 }
 
 .config-item input:hover::placeholder {
-    opacity: 0.8;
-    transform: translateX(2px);
+    opacity: 0.7;
+    transform: translateX(1px);
 }
 
 /* 输入框内容动画 */
@@ -526,7 +528,7 @@ body {
 }
 
 .config-item input:active {
-    transform: scale(0.98);
+    transform: scale(0.99);
 }
 
 /* 输入框聚焦时的标签高亮 */
@@ -536,7 +538,7 @@ body {
 
 .config-item input:focus + label,
 .config-item:has(input:focus) label {
-    color: var(--primary-color);
+    color: var(--input-title-color);
     font-weight: 600;
 }
 
@@ -552,7 +554,7 @@ body {
     left: 0;
     width: 0;
     height: 2px;
-    background: linear-gradient(90deg, var(--primary-color), var(--primary-hover));
+    background: var(--primary-color);
     transition: width var(--transition-fast);
     border-radius: 1px;
 }
@@ -563,12 +565,12 @@ body {
 
 /* 输入框成功状态 */
 .config-item input:valid {
-    border-color: var(--success-color);
+    border-color: var(--border-color);
 }
 
 .config-item input:valid:focus {
-    border-color: var(--success-color);
-    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.3);
+    border-color: var(--input-focus-border);
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
 }
 
 /* 输入框错误状态 */
@@ -578,7 +580,7 @@ body {
 
 .config-item input:invalid:not(:placeholder-shown):focus {
     border-color: var(--danger-color);
-    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.2);
 }
 
 .button-group {
@@ -721,8 +723,9 @@ button:disabled {
 }
 
 .select-option.selected {
-    background: var(--primary-color);
-    color: white;
+    background: rgba(125, 211, 252, 0.2);
+    color: var(--primary-color);
+    border-left: 3px solid var(--primary-color);
 }
 
 .option-icon {
@@ -794,8 +797,40 @@ button:disabled {
     color: var(--text-color);
     font-family: monospace;
     font-size: 0.9rem;
-    white-space: pre-wrap;
+    white-space: pre-line;
     border: 1px solid var(--border-color);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* 扫描结果消息样式 */
+.scan-progress .success-message,
+.scan-progress .error-message {
+    text-align: left;
+    margin: 0;
+    padding: 0;
+}
+
+.scan-progress h4 {
+    margin: 0 0 8px 0;
+    color: var(--text-color);
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.scan-progress p {
+    margin: 0 0 4px 0;
+    color: var(--text-color);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.scan-progress .success-message h4 {
+    color: var(--success-color);
+}
+
+.scan-progress .error-message h4 {
+    color: var(--danger-color);
 }
 
 .placeholder-text {
@@ -1004,13 +1039,11 @@ button:disabled {
     
     /* 移动端输入框悬停效果优化 */
     .config-item input:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 0 0 2px rgba(90, 157, 226, 0.1), 0 2px 4px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
     }
     
     .config-item input:focus {
-        transform: translateY(-1px);
-        box-shadow: 0 0 0 3px rgba(90, 157, 226, 0.3), 0 4px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
     }
 }
 
@@ -1128,7 +1161,7 @@ button:disabled {
 /* 进度条容器样式 */
 .progress-container {
     margin: 15px 0;
-    opacity: 0.5;
+    opacity: 1;
     transition: opacity 0.3s;
 }
 
@@ -1146,10 +1179,11 @@ button:disabled {
 
 .progress-bar {
     height: 8px;
-    background-color: var(--background-dark);
+    background-color: var(--border-color);
     border-radius: 4px;
     overflow: hidden;
     position: relative;
+    border: 1px solid var(--border-light);
 }
 
 .progress-bar-inner {

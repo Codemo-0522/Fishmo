@@ -73,9 +73,11 @@
             <a href="{{ url_for('audio_page') }}" class="menu-item {% if request.path == '/audio' %}active{% endif %}">
                 <span class="menu-item-icon">🎵</span>溯音台
             </a>
+            {% if is_admin %}
             <a href="{{ url_for('admin_page') }}" class="menu-item {% if request.path == '/admin' %}active{% endif %}">
                 <span class="menu-item-icon">⚙️</span>天枢监
             </a>
+            {% endif %}
         </div>
         <!-- 主题切换按钮 -->
         <div class="theme-toggle" id="globalThemeToggle">

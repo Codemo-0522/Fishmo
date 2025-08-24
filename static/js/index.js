@@ -272,8 +272,10 @@ async function handleLogin(account, password) {
 //            document.querySelector('.signin').style.display = 'none';
             document.querySelector('.user-info').style.display = 'flex';
             document.getElementById('authModal').style.display = 'none';
-            // 刷新页面保持状态
-            checkLoginStatus();
+            // 刷新页面以显示天枢监标签
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
         } else {
             showToast(data.message || '元神归位失败',"error",2500)
         }

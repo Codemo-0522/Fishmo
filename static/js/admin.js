@@ -148,8 +148,17 @@ document.addEventListener('DOMContentLoaded', function() {
                 scanProgress.textContent = '扫描已取消';
                 showError('扫描已取消');
             } else {
-                scanProgress.textContent = `扫描失败：${error.message}`;
-                showError(`${actionText}扫描失败：${error.message}`);
+                // 更新进度条文本
+                progressController.updateProgress(0, `视频扫描失败！${error.message}`);
+                
+                // 显示底部错误信息
+                scanProgress.innerHTML = `
+                    <div class="error-message">
+                        <h4>视频扫描失败</h4>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+                showError(`视频扫描失败！${error.message}`);
             }
         })
         .finally(() => {
@@ -484,14 +493,42 @@ function image_upload() {
             }
             showSuccess('图片扫描完成！');
         } else {
-            showError(`图片扫描失败：${data.message}`);
+            showError(`图片扫描失败！${data.message}`);
+            
+            // 更新进度条文本
+            imageProgressController.updateProgress(0, `图片扫描失败！${data.message}`);
+            
+            // 显示底部错误信息
+            const scanProgress = document.getElementById('imgScanProgress');
+            if (scanProgress) {
+                scanProgress.innerHTML = `
+                    <div class="error-message">
+                        <h4>图片扫描失败</h4>
+                        <p>${data.message}</p>
+                    </div>
+                `;
+            }
         }
     })
    .catch(error => {
         // 关闭事件流
         eventSource.close();
         
-        showError(`图片扫描失败：${error.message}`);
+        showError(`图片扫描失败！${error.message}`);
+        
+        // 更新进度条文本
+        imageProgressController.updateProgress(0, `图片扫描失败！${error.message}`);
+        
+        // 显示底部错误信息
+        const scanProgress = document.getElementById('imgScanProgress');
+        if (scanProgress) {
+            scanProgress.innerHTML = `
+                <div class="error-message">
+                    <h4>图片扫描失败</h4>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
     })
     .finally(() => {
         // 延迟隐藏进度条，确保用户能看到最终状态（使用图片专用进度控制器）
@@ -507,7 +544,7 @@ function showImageProgress(message) {
     const progressContainer = document.querySelector('#image-section .progress-container');
     
     if (progressContainer) {
-        progressContainer.style.display = 'block';
+        progressContainer.style.display = 'block';i
     }
     
     if (imgScanProgress) {
@@ -534,7 +571,7 @@ function showImageResult(type, message) {
         const className = type === 'success' ? 'success-message' : 'error-message';
         imgScanProgress.innerHTML = `
             <div class="${className}">
-                <h4>${type === 'success' ? '扫描完成' : '扫描失败'}</h4>
+                <h4>${type === 'success' ? '扫描完成' : '图片扫描失败'}</h4>
                 <p>${message}</p>
             </div>
         `;
@@ -680,18 +717,18 @@ function scanAudio() {
         // 关闭事件流
         eventSource.close();
         
-        updateAudioProgressText(`扫描失败：${error.message}`);
+        updateAudioProgressText(`音频扫描失败！${error.message}`);
         updateAudioProgress(0);
         
         // 显示错误信息
         const scanProgress = document.getElementById('audioScanProgress');
         scanProgress.innerHTML = `
             <div class="error-message">
-                <h4>扫描失败</h4>
+                <h4>音频扫描失败</h4>
                 <p>${error.message}</p>
             </div>
         `;
-        showError(error.message);
+        showError(`音频扫描失败！${error.message}`);
     });
 }
 
@@ -946,8 +983,18 @@ function scanVideosWithThumbnails() {
                 </div>
             `;
         } else {
-            showError('扫描失败：' + (data.message || data.error || '未知错误'));
-            scanProgress.innerHTML = '<div class="error">扫描失败</div>';
+            showError('视频扫描失败！' + (data.message || data.error || '未知错误'));
+            
+            // 更新进度条文本
+            progressController.updateProgress(0, '视频扫描失败！' + (data.message || data.error || '未知错误'));
+            
+            // 显示底部错误信息
+            scanProgress.innerHTML = `
+                <div class="error-message">
+                    <h4>视频扫描失败</h4>
+                    <p>${data.message || data.error || '未知错误'}</p>
+                </div>
+            `;
         }
     })
     .catch(error => {
@@ -955,8 +1002,18 @@ function scanVideosWithThumbnails() {
         eventSource.close();
         
         console.error('扫描请求失败:', error);
-        showError('扫描请求失败：' + error.message);
-        scanProgress.innerHTML = '<div class="error">网络请求失败</div>';
+        showError('视频扫描失败！' + error.message);
+        
+        // 更新进度条文本
+        progressController.updateProgress(0, '视频扫描失败！' + error.message);
+        
+        // 显示底部错误信息
+        scanProgress.innerHTML = `
+            <div class="error-message">
+                <h4>视频扫描失败</h4>
+                <p>${error.message}</p>
+            </div>
+        `;
     })
     .finally(() => {
         // 🎯 延迟隐藏进度条，确保用户能看到最终状态

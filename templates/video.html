@@ -4,7 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>流光镜</title>
+    <title>留影阁</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
     <link rel="stylesheet" href="/static/css/video.css">
     <link rel="stylesheet" href="/static/css/navbar.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -13,10 +14,11 @@
     <div class="video-container">
         <!-- 导入通用导航栏 -->
         {% include 'common/navbar.html' %}
-        <!-- 视频播放器（初始隐藏） -->
-        <div class="video-player-container hidden">
+        
+        <!-- 大窗视频播放器（初始隐藏） -->
+        <div class="video-player-container main-player hidden" id="mainPlayer">
             <div class="video-player">
-                <video id="videoPlayer" controls>
+                <video id="mainVideoPlayer" controls>
                     <source src="" type="video/mp4">
                     您的浏览器不支持视频播放。
                 </video>
@@ -25,6 +27,23 @@
                 <h2>请选择视频</h2>
                 <p>点击下方视频卡片开始播放</p>
             </div>
+        </div>
+
+        <!-- 小窗视频播放器（初始隐藏） -->
+        <div class="video-player-container pip-player hidden" id="pipPlayer">
+            <div class="video-player">
+                <video id="pipVideoPlayer" controls>
+                    <source src="" type="video/mp4">
+                    您的浏览器不支持视频播放。
+                </video>
+            </div>
+            <div class="video-info-panel">
+                <h2>小窗播放</h2>
+                <p>点击关闭按钮退出小窗</p>
+            </div>
+            <button class="pip-close" id="pipCloseBtn">
+                <i class="fas fa-times"></i>
+            </button>
         </div>
 
         <!-- 搜索和分类区域 -->
@@ -80,8 +99,6 @@
             <div class="pagination-info"></div>
         </div>
     </div>
-
-
 
     <script src="/static/js/navbar.js"></script>
     <script src="/static/js/video.js"></script>

@@ -24,13 +24,13 @@
 ### 1. 环境准备
 
 #### 安装Python
-1. 访问 [Python官网](https://www.python.org/downloads/windows/) 下载Python 3.8+
+(1) 访问 [Python官网](https://www.python.org/downloads/windows/) 下载Python 3.8+
 
 #### 安装MySQL
-1. 下载 [MySQL Installer](https://dev.mysql.com/downloads/installer/)
+(2) 下载 [MySQL Installer](https://dev.mysql.com/downloads/installer/)
 
 #### 安装FFmpeg
-1. 访问 [FFmpeg官网](https://ffmpeg.org/download.html#build-windows)
+(3) 访问 [FFmpeg官网](https://ffmpeg.org/download.html#build-windows)
 
 
 ### 2. 项目部署
@@ -38,8 +38,8 @@
 #### 下载项目
 ```bash
 # 下载项目到本地
-git clone https://github.com/Codemo0522/Fishmo-v1.git
-cd Fishmo-v1
+git clone https://github.com/Codemo-0522/Fishmo.git
+cd Fishmo
 ```
 
 #### 创建虚拟环境
@@ -71,7 +71,7 @@ mysql -u root -p
 CREATE DATABASE fishmo CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-3. 初始化数据库表（需要退出mysql命令行后，使用cmd进入database_init.sql所在的文件夹内，粘贴命令运行并输入密码点击回车如果没有任何输出说明成功了）：
+3. 初始化数据库表（需要退出mysql命令行后，使用`cmd`进入`database_init.sql`所在的文件夹内，粘贴命令运行并输入密码点击回车如果没有任何输出说明成功了）：
 ```bash
 mysql -u root -p fishmo < database_init.sql
 ```
@@ -97,7 +97,7 @@ python main.py
 ## 📁 项目结构
 
 ```
-Fishmo-v1/
+Fishmo/
 ├── main.py                  # 主程序入口
 ├── requirements.txt         # Python依赖包
 ├── database_init.sql        # 数据库初始化脚本
@@ -115,7 +115,7 @@ Fishmo-v1/
 ## 🔍 使用说明
 
 ### 管理员功能
-1. 访问管理页面：`http://localhost:1015/admin`（需要登录管理员账号，内置为：账号： `admin`，密码`123456`）
+1. 访问管理页面：`http://localhost:1015/admin`（需要登录管理员账号，账号： `admin`，密码`123456`）
 2. 管理员可以`扫描媒体资源上传数据库`或者`清空数据库`
 
 ### 用户功能
@@ -125,5 +125,11 @@ Fishmo-v1/
 4. 按分类浏览
 
 
-**注意**: 本项目写着玩的，很多BUG，代码很烂但是基本能跑，并且没有实现客户端到服务器的认证等方法，只能作为本地媒体资源的一个浏览器OvO
+### Web app截图
+<img width="2556" height="1420" alt="image" src="https://github.com/user-attachments/assets/44fb7fb7-0df7-4015-b87e-8965f61bcdf0" />
+<img width="2558" height="1427" alt="image" src="https://github.com/user-attachments/assets/0d363a11-8683-4076-b1a1-1e2bcf12ed5c" />
+<img width="2557" height="969" alt="image" src="https://github.com/user-attachments/assets/bd0f4123-12ef-48ea-a146-84e902826550" />
+
+
+**注意**: 本项目写着玩的，很多BUG，代码很烂但是基本能跑，页面组件如果点击没反应就说明对应方法没实现
 

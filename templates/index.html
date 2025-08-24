@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fishmo</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 <body>
@@ -42,7 +43,9 @@
                     <a class="nav-sub-item" target="_blank" href="{{ url_for('video_page')}}">留影阁</a>
                     <a class="nav-sub-item" target="_blank" href="{{ url_for('image_page')}}">万象鉴</a>
                     <a class="nav-sub-item" target="_blank" href="{{ url_for('audio_page')}}">溯音台</a>
+                    {% if is_admin %}
                     <a class="nav-sub-item" target="_blank" href="{{ url_for('admin_page')}}">天枢监</a>
+                    {% endif %}
                 </div>
             </div>
         </div>

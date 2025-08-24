@@ -6,7 +6,7 @@ from pathlib import Path
 
 from pymediainfo import MediaInfo
 from functools import wraps
-from flask import abort, session
+from flask import abort, session, render_template
 from codes.video_queries_new import insert_video_collection, insert_video_item, get_or_create_disk
 
 
@@ -246,12 +246,34 @@ def admin_required(f):
     def decorated_function(*args, **kwargs):
         user_id = session.get('user_id')
         if not user_id:
-            abort(401)
+            # 返回自定义错误页面而不是abort(401)
+            return render_template('error.html', 
+                error_code=401,
+                error_title='请先登录',
+                error_message='访问此页面需要先登录您的账户',
+                error_suggestions=[
+                    '点击下方"重新登录"按钮进行登录',
+                    '如果没有账户，请先注册一个新账户',
+                    '确保您使用的是正确的登录凭据'
+                ],
+                is_admin=False
+            ), 401
         
         # 查询数据库获取用户角色
         user = query_database.get_user_by_id(user_id)
         if not user or (isinstance(user, dict) and user.get('user_role') != 'admin'):
-            abort(403)
+            # 返回自定义错误页面而不是abort(403)
+            return render_template('error.html',
+                error_code=403,
+                error_title='访问权限不足',
+                error_message='抱歉，您没有访问天枢监（管理后台）的权限',
+                error_suggestions=[
+                    '此页面仅限管理员账户访问',
+                    '请联系系统管理员获取相应权限',
+                    '您可以返回其他页面继续浏览'
+                ],
+                is_admin=False
+            ), 403
             
         session['user_role'] = user['user_role']
         return f(*args, **kwargs)

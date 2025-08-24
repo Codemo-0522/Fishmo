@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>资源管理后台</title>
+    <title>天枢宫</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
@@ -150,19 +151,19 @@
                                 <button class="scan-btn" onclick="image_upload()">扫描图片</button>
                                 <button class="clear-image-table" onclick="clearImageTable()">清空图片表</button>
                             </div>
-                        </div>
-                        <!-- 添加进度条容器 -->
-                        <div class="progress-container">
-                            <div class="progress-info">
-                                <span class="progress-text">准备就绪</span>
-                                <span class="progress-percentage">0%</span>
+                            <!-- 添加进度条容器 -->
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span class="progress-text">准备就绪</span>
+                                    <span class="progress-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-inner"></div>
+                                </div>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-bar-inner"></div>
+                            <div id="imgScanProgress" class="scan-progress">
+                                <div class="placeholder-text">扫描结果将在这里显示</div>
                             </div>
-                        </div>
-                        <div id="imgScanProgress" class="scan-progress">
-                            <div class="placeholder-text">扫描结果将在这里显示</div>
                         </div>
                     </div>
 
@@ -206,19 +207,19 @@
                                 <button class="scan-btn" onclick="scanAudio()">扫描音频</button>
                                 <button class="clear-audio-table" onclick="clearAudioTable()">清空音频表</button>
                             </div>
-                        </div>
-                        <!-- 添加进度条容器 -->
-                        <div class="progress-container">
-                            <div class="progress-info">
-                                <span class="progress-text">准备就绪</span>
-                                <span class="progress-percentage">0%</span>
+                            <!-- 添加进度条容器 -->
+                            <div class="progress-container">
+                                <div class="progress-info">
+                                    <span class="progress-text">准备就绪</span>
+                                    <span class="progress-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-bar-inner"></div>
+                                </div>
                             </div>
-                            <div class="progress-bar">
-                                <div class="progress-bar-inner"></div>
+                            <div id="audioScanProgress" class="scan-progress">
+                                <div class="placeholder-text">扫描结果将在这里显示</div>
                             </div>
-                        </div>
-                        <div id="audioScanProgress" class="scan-progress">
-                            <div class="placeholder-text">扫描结果将在这里显示</div>
                         </div>
                     </div>
                 </div>

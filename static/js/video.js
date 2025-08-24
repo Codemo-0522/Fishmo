@@ -10,6 +10,9 @@ document.addEventListener('DOMContentLoaded', initVideoPage);
 
 // 初始化视频页面
 function initVideoPage() {
+    // 设置默认页面标题
+    document.title = '留影阁';
+    
     // 添加搜索按钮事件监听器
     document.getElementById('searchButton').addEventListener('click', handleSearch);
     
@@ -53,15 +56,27 @@ function initVideoPage() {
     }, 100);
 
     // 处理视频播放器全屏模式
-    const videoPlayer = document.getElementById('videoPlayer');
-    const videoContainer = document.querySelector('.video-player-container');
+    const mainVideoPlayer = document.getElementById('mainVideoPlayer');
+    const pipVideoPlayer = document.getElementById('pipVideoPlayer');
+    const mainPlayer = document.getElementById('mainPlayer');
+    const pipPlayer = document.getElementById('pipPlayer');
     
-    if (videoPlayer && videoContainer) {
-        // 监听全屏变化事件
-        videoPlayer.addEventListener('fullscreenchange', handleFullScreenChange);
-        videoPlayer.addEventListener('webkitfullscreenchange', handleFullScreenChange);
-        videoPlayer.addEventListener('mozfullscreenchange', handleFullScreenChange);
-        videoPlayer.addEventListener('MSFullscreenChange', handleFullScreenChange);
+    // 添加移动端滑动进度控制
+    if (window.innerWidth <= 767) {
+        setupMobileProgressControl(mainVideoPlayer);
+        // 手机端禁用小窗功能
+        const pipPlayer = document.getElementById('pipPlayer');
+        if (pipPlayer) {
+            pipPlayer.style.display = 'none';
+        }
+    }
+    
+    if (mainVideoPlayer && mainPlayer) {
+        // 监听主播放器全屏变化事件
+        mainVideoPlayer.addEventListener('fullscreenchange', handleFullScreenChange);
+        mainVideoPlayer.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+        mainVideoPlayer.addEventListener('mozfullscreenchange', handleFullScreenChange);
+        mainVideoPlayer.addEventListener('MSFullscreenChange', handleFullScreenChange);
         
         // 处理全屏变化
         function handleFullScreenChange() {
@@ -70,10 +85,35 @@ function initVideoPage() {
                 document.mozFullScreenElement || 
                 document.msFullscreenElement) {
                 // 进入全屏模式
-                videoContainer.classList.add('fullscreen');
+                mainPlayer.classList.add('fullscreen');
             } else {
                 // 退出全屏模式
-                videoContainer.classList.remove('fullscreen');
+                mainPlayer.classList.remove('fullscreen');
+            }
+        }
+    }
+    
+    // 只在桌面端启用小窗功能
+    if (window.innerWidth > 767 && pipVideoPlayer && pipPlayer) {
+        // 监听小窗播放器全屏变化事件
+        pipVideoPlayer.addEventListener('fullscreenchange', handlePipFullScreenChange);
+        pipVideoPlayer.addEventListener('webkitfullscreenchange', handlePipFullScreenChange);
+        pipVideoPlayer.addEventListener('mozfullscreenchange', handlePipFullScreenChange);
+        pipVideoPlayer.addEventListener('MSFullscreenChange', handlePipFullScreenChange);
+        
+        // 处理小窗全屏变化
+        function handlePipFullScreenChange() {
+            if (document.fullscreenElement || 
+                document.webkitFullscreenElement || 
+                document.mozFullScreenElement || 
+                document.msFullscreenElement) {
+                // 进入全屏模式
+                pipPlayer.classList.add('fullscreen');
+            } else {
+                // 退出全屏模式 - 立即重置，避免尺寸变化
+                pipPlayer.classList.remove('fullscreen');
+                // 强制重新计算样式
+                pipVideoPlayer.offsetHeight;
             }
         }
     }
@@ -601,15 +641,50 @@ function displayVideos(videos, container) {
         // 开始加载缩略图
         loadThumbnail();
         
-        // 添加点击事件
+                // 添加点击事件
         videoCard.addEventListener('click', function() {
-            // 传递视频时长和画质信息
-            playVideo(
-                videoFullPath, 
-                videoTitle, 
-                video.video_duration || null, 
-                video.video_quality || null
-            );
+            const mainVideoPlayer = document.getElementById('mainVideoPlayer');
+            const pipVideoPlayer = document.getElementById('pipVideoPlayer');
+            
+            // 检查是否是当前播放的视频
+            const isCurrentPlaying = this.classList.contains('playing');
+            
+            if (isCurrentPlaying) {
+                // 如果是当前播放的视频，切换播放/暂停状态
+                if (!mainVideoPlayer.paused) {
+                    // 当前正在播放，暂停视频
+                    mainVideoPlayer.pause();
+                    // 只在桌面端暂停小窗
+                    if (window.innerWidth > 767) {
+                        pipVideoPlayer.pause();
+                    }
+                    // 切换图标为播放
+                    const playButton = this.querySelector('.play-button i');
+                    if (playButton) {
+                        playButton.className = 'fas fa-play';
+                    }
+                } else {
+                    // 当前已暂停，继续播放
+                    mainVideoPlayer.play().catch(e => console.log('播放失败:', e));
+                    // 只在桌面端播放小窗
+                    if (window.innerWidth > 767) {
+                        pipVideoPlayer.play().catch(e => console.log('小窗播放失败:', e));
+                    }
+                    // 切换图标为暂停
+                    const playButton = this.querySelector('.play-button i');
+                    if (playButton) {
+                        playButton.className = 'fas fa-pause';
+                    }
+                }
+            } else {
+                // 如果不是当前播放的视频，播放新视频
+                playVideo(
+                    videoFullPath, 
+                    videoTitle, 
+                    video.video_duration || null, 
+                    video.video_quality || null
+                );
+            }
             
             // 在移动设备上，点击视频后关闭分类面板
             if (isMobile) {
@@ -628,87 +703,30 @@ function displayVideos(videos, container) {
 
 // 播放视频
 function playVideo(videoPath, videoName, duration, quality) {
-    const playerContainer = document.querySelector('.video-player-container');
-    const videoPlayer = document.getElementById('videoPlayer');
-    const videoTitle = document.querySelector('.video-info-panel h2');
-    const videoDesc = document.querySelector('.video-info-panel p');
+    const mainPlayer = document.getElementById('mainPlayer');
+    const pipPlayer = document.getElementById('pipPlayer');
+    const mainVideoPlayer = document.getElementById('mainVideoPlayer');
+    const pipVideoPlayer = document.getElementById('pipVideoPlayer');
+    const mainTitle = mainPlayer.querySelector('.video-info-panel h2');
+    const mainDesc = mainPlayer.querySelector('.video-info-panel p');
+    const pipCloseBtn = document.getElementById('pipCloseBtn');
 
-    // 提升变量作用域
-    let pipCloseBtn;
+    // 更新播放状态UI
+    updateVideoPlayState(videoPath, videoName);
 
-    // 创建关闭小窗按钮（如果不存在）
-    if (!document.querySelector('.pip-close')) {
-        pipCloseBtn = document.createElement('button');
-        pipCloseBtn.className = 'pip-close';
-        pipCloseBtn.innerHTML = '<i class="fas fa-times"></i>';
-        pipCloseBtn.addEventListener('click', function (e) {
-            e.stopPropagation();
-            if (playerContainer.classList.contains('pip-mode')) {
-                playerContainer.classList.remove('pip-mode');
-                videoPlayer.pause();
-            }
-        });
-        playerContainer.appendChild(pipCloseBtn);
-    } else {
-        pipCloseBtn = document.querySelector('.pip-close');
-    }
+    // 显示大窗播放器，隐藏小窗播放器
+    mainPlayer.classList.remove('hidden');
+    pipPlayer.classList.add('hidden');
 
-    // 显示播放器
-    if (playerContainer.classList.contains('hidden')) {
-        playerContainer.classList.remove('hidden');
-    }
-
-    // z-index已在CSS中统一设置，移除动态设置
-
-    // 检测播放器是否处于小窗模式
-    const wasInPipMode = playerContainer.classList.contains('pip-mode');
+    // 更新大窗播放器信息
+    mainVideoPlayer.src = videoPath;
+    mainTitle.textContent = videoName;
     
-    // 如果是在小窗模式下点击新视频，暂时放大小窗，但保持小窗状态
-    if (wasInPipMode) {
-        // 应用临时放大小窗样式，添加过渡动画
-        playerContainer.classList.add('pip-animating');
-        
-        setTimeout(() => {
-            playerContainer.classList.add('pip-mode-expanded');
-            playerContainer.classList.remove('pip-animating');
-            
-            // 5秒后或滚动时恢复原始小窗大小
-            setTimeout(() => {
-                if (playerContainer.classList.contains('pip-mode-expanded')) {
-                    // 添加动画过渡
-                    playerContainer.classList.add('pip-animating');
-                    
-                    setTimeout(() => {
-                        playerContainer.classList.remove('pip-mode-expanded');
-                        
-                        setTimeout(() => {
-                            playerContainer.classList.remove('pip-animating');
-                        }, 500);
-                    }, 100);
-                }
-            }, 5000);
-        }, 100);
-    } else {
-        // 不在小窗模式，保持正常显示
-        playerContainer.classList.add('pip-reverse-animating');
-        
-        setTimeout(() => {
-            playerContainer.classList.remove('pip-mode');
-            
-            setTimeout(() => {
-                playerContainer.classList.remove('pip-reverse-animating');
-            }, 500);
-        }, 100);
-    }
-
-    // 更新视频信息
-    videoPlayer.src = videoPath;
-    videoTitle.textContent = videoName;
+    // 修改页面标题为视频名称
+    document.title = videoName + ' | 留影阁';
     
     // 添加视频时长和画质信息
     let descText = '正在加载视频...';
-    
-    // 如果有时长或画质信息，添加到描述中
     const videoDetails = [];
     if (duration) {
         videoDetails.push(`时长: ${duration}`);
@@ -717,60 +735,234 @@ function playVideo(videoPath, videoName, duration, quality) {
         videoDetails.push(`画质: ${quality}`);
     }
     
-    // 如果有详细信息，添加到描述前面
     if (videoDetails.length > 0) {
         descText = videoDetails.join(' | ') + '<br>' + descText;
     }
     
-    videoDesc.innerHTML = descText;
+    mainDesc.innerHTML = descText;
 
-    videoPlayer.load();
+    // 只在桌面端同步小窗播放器
+    if (window.innerWidth > 767) {
+        pipVideoPlayer.src = videoPath;
+        // 设置播放器同步
+        setupPlayerSync(mainVideoPlayer, pipVideoPlayer);
+    }
 
-    // 滚动到视图逻辑
-    if (!wasInPipMode && !isElementInViewport(playerContainer)) {
-        playerContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    mainVideoPlayer.load();
+
+    // 滚动到视图逻辑 - 只有在大窗隐藏时才滚动
+    if (mainPlayer.classList.contains('hidden')) {
+        // 大窗隐藏时，滚动到顶部显示大窗
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+        // 如果大窗已经显示，检查是否需要显示小窗
+        // 手动触发一次滚动监听逻辑
+        setTimeout(() => {
+            handleVideoMinimize();
+        }, 100);
     }
 
     // 视频加载处理
-    videoPlayer.onloadeddata = function () {
-        // 保留时长和画质信息，更新加载状态
+    mainVideoPlayer.onloadeddata = function () {
         let loadedText = '视频已加载，可以开始播放';
         if (videoDetails.length > 0) {
             loadedText = videoDetails.join(' | ') + '<br>' + loadedText;
         }
-        videoDesc.innerHTML = loadedText;
+        mainDesc.innerHTML = loadedText;
         
-        videoPlayer.play().catch(error => {
+        mainVideoPlayer.play().catch(error => {
             console.error('自动播放失败:', error);
-            
-            // 保留时长和画质信息，更新播放状态
             let playText = '点击播放按钮开始播放';
             if (videoDetails.length > 0) {
                 playText = videoDetails.join(' | ') + '<br>' + playText;
             }
-            videoDesc.innerHTML = playText;
+            mainDesc.innerHTML = playText;
         });
     };
 
-    videoPlayer.onerror = function () {
-        // 保留时长和画质信息，更新错误状态
+    mainVideoPlayer.onerror = function () {
         let errorText = '视频加载失败，请尝试其他视频';
         if (videoDetails.length > 0) {
             errorText = videoDetails.join(' | ') + '<br>' + errorText;
         }
-        videoDesc.innerHTML = errorText;
+        mainDesc.innerHTML = errorText;
     };
 
-    // 点击恢复逻辑
-    if (wasInPipMode) {
-        const expandPipOnce = function (e) {
-            if (e.target === pipCloseBtn || e.target.closest('.pip-close')) return;
-            playerContainer.classList.remove('pip-mode', 'pip-mode-expanded');
-            playerContainer.removeEventListener('click', expandPipOnce);
-        };
-        playerContainer.addEventListener('click', expandPipOnce);
+    // 小窗关闭按钮事件（只在桌面端）
+    if (window.innerWidth > 767) {
+        pipCloseBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // 只隐藏小窗，大窗保持显示状态
+            pipPlayer.classList.add('hidden');
+            pipVideoPlayer.pause();
+        });
     }
 }
+
+// 设置播放器同步
+function setupPlayerSync(mainPlayer, pipPlayer) {
+    // 手机端禁用同步功能
+    if (window.innerWidth <= 767) {
+        return;
+    }
+    
+    let isSyncing = false; // 防止循环触发
+    
+    // 主播放器事件
+    mainPlayer.addEventListener('play', function() {
+        if (!isSyncing) {
+            isSyncing = true;
+            pipPlayer.currentTime = mainPlayer.currentTime;
+            pipPlayer.play().catch(e => console.log('小窗播放失败:', e));
+            // 同步更新列表图标
+            updatePlayPauseIcon(true);
+            setTimeout(() => { isSyncing = false; }, 100);
+        }
+    });
+    
+    mainPlayer.addEventListener('pause', function() {
+        if (!isSyncing) {
+            isSyncing = true;
+            pipPlayer.pause();
+            // 同步更新列表图标
+            updatePlayPauseIcon(false);
+            setTimeout(() => { isSyncing = false; }, 100);
+        }
+    });
+    
+    mainPlayer.addEventListener('seeked', function() {
+        if (!isSyncing) {
+            isSyncing = true;
+            pipPlayer.currentTime = mainPlayer.currentTime;
+            setTimeout(() => { isSyncing = false; }, 100);
+        }
+    });
+    
+    // 小窗播放器事件
+    pipPlayer.addEventListener('play', function() {
+        if (!isSyncing) {
+            isSyncing = true;
+            mainPlayer.currentTime = pipPlayer.currentTime;
+            mainPlayer.play().catch(e => console.log('主播放器播放失败:', e));
+            // 同步更新列表图标
+            updatePlayPauseIcon(true);
+            setTimeout(() => { isSyncing = false; }, 100);
+        }
+    });
+    
+    pipPlayer.addEventListener('pause', function() {
+        if (!isSyncing) {
+            isSyncing = true;
+            mainPlayer.pause();
+            // 同步更新列表图标
+            updatePlayPauseIcon(false);
+            setTimeout(() => { isSyncing = false; }, 100);
+        }
+    });
+    
+    pipPlayer.addEventListener('seeked', function() {
+        if (!isSyncing) {
+            isSyncing = true;
+            mainPlayer.currentTime = pipPlayer.currentTime;
+            setTimeout(() => { isSyncing = false; }, 100);
+        }
+    });
+}
+
+// 更新播放/暂停图标
+function updatePlayPauseIcon(isPlaying) {
+    const playingCard = document.querySelector('.video-card.playing');
+    if (playingCard) {
+        const playButton = playingCard.querySelector('.play-button i');
+        if (playButton) {
+            playButton.className = isPlaying ? 'fas fa-pause' : 'fas fa-play';
+        }
+    }
+}
+
+// 设置移动端滑动进度控制
+function setupMobileProgressControl(videoPlayer) {
+    if (!videoPlayer) return;
+    
+    let isDragging = false;
+    let startY = 0;
+    let startTime = 0;
+    let videoDuration = 0;
+    
+    // 触摸开始
+    videoPlayer.addEventListener('touchstart', function(e) {
+        if (e.touches.length === 1) {
+            isDragging = true;
+            startY = e.touches[0].clientX; // 改为X轴
+            startTime = videoPlayer.currentTime;
+            videoDuration = videoPlayer.duration || 0;
+            
+            // 防止页面滚动
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // 触摸移动
+    videoPlayer.addEventListener('touchmove', function(e) {
+        if (isDragging && e.touches.length === 1) {
+            const currentY = e.touches[0].clientX; // 改为X轴
+            const deltaY = currentY - startY; // 向右滑动为正
+            const screenWidth = window.innerWidth;
+            
+            // 计算进度变化（每100px屏幕宽度对应30%的视频进度）
+            const progressChange = (deltaY / screenWidth) * 0.3;
+            const newTime = startTime + (progressChange * videoDuration);
+            
+            // 限制在有效范围内
+            const clampedTime = Math.max(0, Math.min(newTime, videoDuration));
+            
+            // 更新视频进度
+            videoPlayer.currentTime = clampedTime;
+            
+            // 防止页面滚动
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // 触摸结束
+    videoPlayer.addEventListener('touchend', function(e) {
+        isDragging = false;
+    });
+    
+    // 添加视觉提示
+    videoPlayer.style.cursor = 'ns-resize';
+}
+
+// 更新视频播放状态UI
+function updateVideoPlayState(videoPath, videoName) {
+    // 清除所有视频卡片的播放状态
+    document.querySelectorAll('.video-card').forEach(card => {
+        card.classList.remove('playing');
+        const playButton = card.querySelector('.play-button i');
+        if (playButton) {
+            playButton.className = 'fas fa-play';
+        }
+    });
+    
+    // 设置当前播放视频的状态
+    // 从videoPath中提取video_path部分来匹配
+    const videoPathParts = videoPath.split('/');
+    const videoFileName = videoPathParts[videoPathParts.length - 1];
+    const videoDir = videoPathParts[videoPathParts.length - 2];
+    
+    const currentCard = document.querySelector(`.video-card[data-name="${videoFileName}"]`);
+    if (currentCard) {
+        currentCard.classList.add('playing');
+        const playButton = currentCard.querySelector('.play-button i');
+        if (playButton) {
+            playButton.className = 'fas fa-pause';
+        }
+    }
+}
+
+
+
+
 
 // 视口检测辅助函数
 function isElementInViewport(el) {
@@ -785,51 +977,30 @@ function isElementInViewport(el) {
 
 // 修改视频小窗口功能
 function handleVideoMinimize() {
-    const playerContainer = document.querySelector('.video-player-container');
-    if (playerContainer.classList.contains('hidden')) return;
-    
-    // 如果正在进行动画，不要重复触发
-    if (playerContainer.classList.contains('pip-animating') || 
-        playerContainer.classList.contains('pip-reverse-animating')) {
+    // 手机端禁用小窗功能
+    if (window.innerWidth <= 767) {
         return;
     }
     
-    const videoPlayer = document.getElementById('videoPlayer');
-    const scrollPosition = window.scrollY;
-    const containerTop = playerContainer.offsetTop;
+    const mainPlayer = document.getElementById('mainPlayer');
+    const pipPlayer = document.getElementById('pipPlayer');
     
-    // 移除临时放大状态
-    if (scrollPosition > containerTop + 100 && playerContainer.classList.contains('pip-mode-expanded')) {
-        playerContainer.classList.remove('pip-mode-expanded');
+    // 如果大窗隐藏，说明没有在播放视频，直接返回
+    if (mainPlayer.classList.contains('hidden')) {
+        return;
     }
     
-    // 当滚动超过播放器顶部一定距离时，切换到小窗模式
-    if (scrollPosition > containerTop + 200 && !playerContainer.classList.contains('pip-mode')) {
-        // 添加过渡动画类
-        playerContainer.classList.add('pip-animating');
-        
-        // 延迟添加小窗类，让动画有时间开始
-        setTimeout(() => {
-            playerContainer.classList.add('pip-mode');
-            
-            // 动画结束后移除动画类
-            setTimeout(() => {
-                playerContainer.classList.remove('pip-animating');
-            }, 500);
-        }, 100);
-    } else if (scrollPosition <= containerTop && playerContainer.classList.contains('pip-mode')) {
-        // 添加反向过渡动画类
-        playerContainer.classList.add('pip-reverse-animating');
-        
-        // 延迟移除小窗类，让动画有时间完成
-        setTimeout(() => {
-            playerContainer.classList.remove('pip-mode');
-            
-            // 动画结束后移除动画类
-            setTimeout(() => {
-                playerContainer.classList.remove('pip-reverse-animating');
-            }, 500);
-        }, 100);
+    // 检查大窗播放器是否在视口中可见
+    const mainVideoPlayer = document.getElementById('mainVideoPlayer');
+    const rect = mainVideoPlayer.getBoundingClientRect();
+    const isMainVisible = rect.bottom > 0 && rect.top < window.innerHeight;
+    
+    if (isMainVisible) {
+        // 大窗在视口中可见，隐藏小窗
+        pipPlayer.classList.add('hidden');
+    } else {
+        // 大窗不在视口中，显示小窗
+        pipPlayer.classList.remove('hidden');
     }
 }
 

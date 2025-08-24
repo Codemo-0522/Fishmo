@@ -24,6 +24,9 @@ def load_env():
         'mysql_charset': os.getenv('mysql_charset', 'utf8'),
         'ffmpeg_path': os.getenv('ffmpeg_path', ''),
         'video_everyPageShowVideoNum': int(os.getenv('video_everyPageShowVideoNum', '30')),
+        'image_everyPageShowImageNum': int(os.getenv('image_everyPageShowImageNum', '21')),
+        'showImage_everyPageShowImageNum': int(os.getenv('showImage_everyPageShowImageNum', '30')),
+        'audio_everyPageShowAudioNum': int(os.getenv('audio_everyPageShowAudioNum', '50')),
         'app_host': os.getenv('app_host', '0.0.0.0'),
         'app_port': int(os.getenv('app_port', '5000'))
     }
@@ -40,6 +43,9 @@ mysql_database = env_config['mysql_database']
 mysql_charset = env_config['mysql_charset']
 ffmpeg_path = env_config['ffmpeg_path']
 video_everyPageShowVideoNum = env_config['video_everyPageShowVideoNum']
+image_everyPageShowImageNum = env_config['image_everyPageShowImageNum']
+showImage_everyPageShowImageNum = env_config['showImage_everyPageShowImageNum']
+audio_everyPageShowAudioNum = env_config['audio_everyPageShowAudioNum']
 app_host = env_config['app_host']
 app_port = env_config['app_port']
 

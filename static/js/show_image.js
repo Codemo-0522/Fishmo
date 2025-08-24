@@ -3,7 +3,7 @@
 let allImagesData = []; // 存储所有图片数据
 let imagesData = [];    // 当前页面显示的图片数据
 let currentPage = 1;    // 当前页码
-let imagesPerPage = 30; // 每页显示的图片数量
+let imagesPerPage = 30; // 每页显示的图片数量（默认值，将从API获取）
 let totalPages = 1;     // 总页数
 let collectionId = null; // 当前图集ID
 let subsetId = null;     // 当前子集ID
@@ -23,67 +23,79 @@ function showError(message) {
     console.error(message);
 }
 
-// 在页面加载时获取图片数据
-document.addEventListener('DOMContentLoaded', function() {
-    // 禁用浏览器自动恢复滚动位置功能
-    if ('scrollRestoration' in history) {
-        history.scrollRestoration = 'manual';
-        console.log('已禁用浏览器自动恢复滚动位置');
-    }
-    
-    // 显示环境信息，帮助调试
-    console.log('浏览器: ' + navigator.userAgent);
-    console.log('窗口尺寸: ' + window.innerWidth + 'x' + window.innerHeight);
-    
-    // 获取URL中的参数
-    // 优先从id参数获取，如果没有则尝试从collection_id参数获取
-    collectionId = getUrlParam('id');
-    if (!collectionId) {
-        collectionId = getUrlParam('collection_id');
-    }
-
-    // 获取页码和子集参数（如果有）
-    const pageParam = getUrlParam('page');
-    if (pageParam && !isNaN(parseInt(pageParam))) {
-        currentPage = parseInt(pageParam);
-    }
-    
-    subsetId = getUrlParam('subset');
-    if (subsetId) {
-        subsetId = parseInt(subsetId);
-        
-        // 如果没有明确的页码参数，则使用子集序号+1作为页码
-        if (!pageParam) {
-            currentPage = subsetId + 1;
+    // 在页面加载时获取图片数据
+    document.addEventListener('DOMContentLoaded', function() {
+        // 禁用浏览器自动恢复滚动位置功能
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+            console.log('已禁用浏览器自动恢复滚动位置');
         }
-    }
-    
-    if (!collectionId) {
-        showError('未指定图片集ID');
-        return;
-    }
-    
-    console.log(`准备加载图片集: ${collectionId}, 页码: ${currentPage}, 子集: ${subsetId || '全部'}`);
-    
-    // 显示加载中状态
-    document.getElementById('imagesGrid').innerHTML = '<div class="loading-message">正在加载图片...</div>';
-    
-    // 设置分页按钮事件
-    document.getElementById('prevPage').addEventListener('click', goToPreviousPage);
-    document.getElementById('nextPage').addEventListener('click', goToNextPage);
+        
+        // 显示环境信息，帮助调试
+        console.log('浏览器: ' + navigator.userAgent);
+        console.log('窗口尺寸: ' + window.innerWidth + 'x' + window.innerHeight);
+        
+        // 获取URL中的参数
+        // 优先从id参数获取，如果没有则尝试从collection_id参数获取
+        collectionId = getUrlParam('id');
+        if (!collectionId) {
+            collectionId = getUrlParam('collection_id');
+        }
 
-    // 测试静态图片是否可以加载
-    testStaticImage();
-    
-    // 发起API请求获取图片数据
-    fetch(`/api/get_collection_images/${collectionId}`)
+        // 获取页码和子集参数（如果有）
+        const pageParam = getUrlParam('page');
+        if (pageParam && !isNaN(parseInt(pageParam))) {
+            currentPage = parseInt(pageParam);
+        }
+        
+        subsetId = getUrlParam('subset');
+        if (subsetId) {
+            subsetId = parseInt(subsetId);
+            
+            // 如果没有明确的页码参数，则使用子集序号+1作为页码
+            if (!pageParam) {
+                currentPage = subsetId + 1;
+            }
+        }
+        
+        if (!collectionId) {
+            showError('未指定图片集ID');
+            return;
+        }
+        
+        console.log(`准备加载图片集: ${collectionId}, 页码: ${currentPage}, 子集: ${subsetId || '全部'}`);
+        
+        // 显示加载中状态
+        document.getElementById('imagesGrid').innerHTML = '<div class="loading-message">正在加载配置...</div>';
+        
+        // 设置分页按钮事件
+        document.getElementById('prevPage').addEventListener('click', goToPreviousPage);
+        document.getElementById('nextPage').addEventListener('click', goToNextPage);
+
+        // 先获取配置，然后加载图片数据
+        fetch('/api/show_image_config')
+            .then(response => response.json())
+            .then(configData => {
+                if (configData.status === 'success') {
+                    imagesPerPage = configData.data.imagesPerPage;
+                    console.log(`从配置获取到每页显示图片数量: ${imagesPerPage}`);
+                    
+                    // 测试静态图片是否可以加载
+                    testStaticImage();
+                    
+                    // 发起API请求获取图片数据
+                    return fetch(`/api/get_collection_images/${collectionId}`);
+                } else {
+                    throw new Error('获取配置失败');
+                }
+            })
         .then(response => {
             console.log('API响应状态码:', response.status);
             
             if (response.status === 403) {
-                return response.json().then(data => {
-                    throw new Error('没有权限查看此图片集，请先登录或升级为VIP用户');
-                });
+                // 直接跳转到错误页面
+                window.location.href = `/error?code=403&title=访问权限不足&message=抱歉，您没有权限查看此VIP图片集`;
+                return;
             }
             
             if (!response.ok) {
@@ -154,7 +166,8 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('获取图片数据出错:', error);
             if (error.message.includes('权限')) {
-                showError('没有权限查看此图片集，请先登录或升级为VIP用户');
+                // 跳转到错误页面而不是显示简单错误消息
+                window.location.href = `/error?code=403&title=访问权限不足&message=抱歉，您没有权限查看此VIP图片集`;
             } else {
                 showError('加载图片失败: ' + error.message);
             }
@@ -436,7 +449,7 @@ function forceScrollToTop() {
 
 // 更新标题函数
 function updatePageTitle() {
-    let title = `${collectionName}  第${currentPage}页`;
+    let title = `${collectionName} 第${currentPage}页 | 万象鉴`;
     document.title = title;
     console.log('更新页面标题:', title);
 }

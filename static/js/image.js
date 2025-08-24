@@ -4,7 +4,7 @@ let currentPage = 1;
 let totalPages = 1;
 let searchQuery = '';
 let isSearchMode = false;
-let perPage = 21; // 每页显示20个图片集
+// 每页显示数量由后端env_loader.py配置决定，默认21个图片集
 
 // 页面加载后初始化
 document.addEventListener('DOMContentLoaded', initImagePage);
@@ -81,8 +81,8 @@ function loadImageCollections(page, isSearch = false) {
         gridContainer.style.display = 'block';
     }
     
-    // 构建API请求URL
-    let url = `/api/image_collections?page=${page}&per_page=${perPage}`;
+    // 构建API请求URL，不指定per_page参数，使用后端配置的值
+    let url = `/api/image_collections?page=${page}`;
     if (isSearch && searchQuery) {
         url += `&search=${encodeURIComponent(searchQuery)}`;
     }
