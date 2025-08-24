@@ -127,7 +127,7 @@ Fishmo/
 
 ### Web app截图
 <img width="2556" height="1420" alt="image" src="https://github.com/user-attachments/assets/44fb7fb7-0df7-4015-b87e-8965f61bcdf0" />
-<img width="2558" height="1427" alt="image" src="https://github.com/user-attachments/assets/0d363a11-8683-4076-b1a1-1e2bcf12ed5c" />
+<img width="2547" height="1421" alt="image" src="https://github.com/user-attachments/assets/b5dc5350-8fd3-46c3-aa71-d666045f3767" />
 <img width="2557" height="969" alt="image" src="https://github.com/user-attachments/assets/bd0f4123-12ef-48ea-a146-84e902826550" />
 
 
