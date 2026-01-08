@@ -1,0 +1,116 @@
+<!-- 立即设置主题，避免闪烁 -->
+<script>
+(function() {
+    const savedTheme = localStorage.getItem('globalTheme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    document.body.setAttribute('data-theme', savedTheme);
+})();
+</script>
+
+<!-- 通用导航栏模板 -->
+<div class="top-bar">
+    <div class="logo-other-div">
+        <!--Logo区域-->
+        <div class="logo-div" onclick="window.location.href='/'">
+            <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Fishmo" class="logo">
+            <span class="brand-name">Fishmo</span>
+        </div>
+        <!-- 导航链接 -->
+        <div class="nav-links">
+            <a href="{{ url_for('index') }}" class="nav-link {% if request.path == '/' %}active{% endif %}">首页</a>
+            <a href="{{ url_for('video_page') }}" class="nav-link {% if request.path == '/video' %}active{% endif %}">留影阁</a>
+            <a href="{{ url_for('image_page') }}" class="nav-link {% if request.path == '/image' %}active{% endif %}">万象鉴</a>
+            <a href="{{ url_for('audio_page') }}" class="nav-link {% if request.path == '/audio' %}active{% endif %}">溯音台</a>
+        </div>
+    </div>
+
+    <!-- 右侧控制区域 -->
+    <div class="nav-controls">
+        <!-- 汉堡菜单按钮 -->
+        <div class="nav-toggle">
+            <span class="nav-toggle-icon">≡</span>
+        </div>
+    </div>
+</div>
+
+<!-- 侧边导航 -->
+<div class="side-nav">
+<!--    <div class="side-nav-close">X</div>-->
+
+    <!-- 添加用户信息区域到侧边栏顶部 -->
+    <div class="side-nav-header">
+        <div class="user-profile">
+            <div class="user-info-sidebar">
+                <div class="an">
+                    <div class="user-avatar" id="sidebarUserAvatar">
+                        <img src="{{ url_for('static', filename='images/img8.png') }}" alt="用户头像" class="user-avatar-img">
+                    </div>
+                    <span class="user-name" id="sidebarUserName">未登录</span>
+                </div>
+                <div class="user-details">
+                    <a href="javascript:void(0)" class="sidebar-logout-btn" onclick="handleLogout()">闭关</a>
+                </div>
+            </div>
+            <div class="login-buttons">
+                <a href="javascript:void(0)" class="sidebar-login-btn" onclick="showLoginModal()">灵契归源</a>
+                <a href="javascript:void(0)" class="sidebar-register-btn" onclick="showRegisterModal()">灵契缔结</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="side-nav-menu">
+        <!-- 天机阁分类 -->
+        <div class="menu-category">
+            <a href="{{ url_for('index') }}" class="menu-item {% if request.path == '/' %}active{% endif %}">
+                <span class="menu-item-icon">🏠</span>新手村
+            </a>
+            <a href="{{ url_for('video_page') }}" class="menu-item {% if request.path == '/video' %}active{% endif %}">
+                <span class="menu-item-icon">🎬</span>留影阁
+            </a>
+            <a href="{{ url_for('image_page') }}" class="menu-item {% if request.path == '/image' %}active{% endif %}">
+                <span class="menu-item-icon">🖼️</span>万象鉴
+            </a>
+            <a href="{{ url_for('audio_page') }}" class="menu-item {% if request.path == '/audio' %}active{% endif %}">
+                <span class="menu-item-icon">🎵</span>溯音台
+            </a>
+            {% if is_admin %}
+            <a href="{{ url_for('admin_page') }}" class="menu-item {% if request.path == '/admin' %}active{% endif %}">
+                <span class="menu-item-icon">⚙️</span>天枢监
+            </a>
+            {% endif %}
+        </div>
+        <!-- 主题切换按钮 -->
+        <div class="theme-toggle" id="globalThemeToggle">
+            <i class="fas fa-sun"></i>
+        </div>
+
+    </div>
+</div>
+
+<!-- 侧边导航遮罩层 -->
+<div class="side-nav-overlay"></div>
+
+<!-- 登录注册弹窗 -->
+<div class="auth-modal" id="authModal" style="display: none;">
+    <div class="auth-content">
+        <div class="auth-tabs">
+            <div class="auth-tab active" data-tab="login" onclick="switchTab('login')">灵契归源</div>
+            <div class="auth-tab" data-tab="register" onclick="switchTab('register')">灵契缔结</div>
+        </div>
+
+        <!-- 登录表单 -->
+        <div class="auth-form" id="loginForm">
+            <input type="text" placeholder="请输入灵契印记" id="loginAccount">
+            <input type="password" placeholder="请输入灵契密钥" id="loginPassword">
+            <button class="auth-btn" onclick="handleLogin()">归源</button>
+        </div>
+
+        <!-- 注册表单 -->
+        <div class="auth-form" id="registerForm" style="display: none;">
+            <input type="text" placeholder="请输入灵契印记" id="registerAccount">
+            <input type="password" placeholder="请输入灵契密钥" id="registerPassword">
+            <input type="password" placeholder="请再次输入灵契密钥" id="registerConfirm">
+            <button class="auth-btn" onclick="handleRegister()">缔结</button>
+        </div>
+    </div>
+</div>

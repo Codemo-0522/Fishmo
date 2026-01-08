@@ -1,0 +1,549 @@
+/* static/css/image.css */
+
+/* 浅色主题 */
+[data-theme="light"] {
+    --primary-color: #4a90e2;
+    --secondary-color: #6c757d;
+    --background-color: #f8f9fa;
+    --card-bg-color: #ffffff;
+    --text-color: #212529;
+    --border-color: #dee2e6;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --pagination-active: #4a90e2;
+    --pagination-hover: #357abd;
+}
+
+/* 深色主题 */
+[data-theme="dark"] {
+    --primary-color: #61dafb;
+    --secondary-color: #adb5bd;
+    --background-color: #1a1a1a;
+    --card-bg-color: #2d2d2d;
+    --text-color: #f8f9fa;
+    --border-color: #444444;
+    --shadow-color: rgba(0, 0, 0, 0.3);
+    --pagination-active: #61dafb;
+    --pagination-hover: #4fa8c3;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+    margin: 0; /* 确保body没有默认margin */
+    padding: 0; /* 确保body没有默认padding */
+}
+
+.image-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 20px 20px; /* 修改padding，移除顶部padding */
+    padding-top: 80px; /* 增加顶部间隔，为导航栏留出足够空间 */
+}
+
+/* 搜索区域 */
+.search-container {
+    margin-top: 10px; /* 减小顶部间距 */
+    margin-bottom: 10px; /* 减小底部间距 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.search-box {
+    display: flex;
+    width: 100%;
+    max-width: 600px;
+    position: relative;
+    box-shadow: 0 2px 8px var(--shadow-color);
+    border-radius: 30px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    flex-wrap: nowrap;
+}
+
+.search-box input {
+    flex: 1;
+    padding: 15px 20px;
+    border: none;
+    background-color: var(--card-bg-color);
+    color: var(--text-color);
+    font-size: 1rem;
+    outline: none;
+    min-width: 0; /* 确保输入框能够缩小 */
+}
+
+.search-box button {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 0 25px;
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.3s;
+    white-space: nowrap;
+    flex-shrink: 0; /* 防止按钮被压缩 */
+}
+
+.search-box button:hover {
+    background-color: var(--pagination-hover);
+}
+
+.search-box button i {
+    margin-right: 8px;
+}
+
+/* 搜索结果 */
+.search-results-container {
+    margin-bottom: 15px; /* 减小底部间距 */
+}
+
+.search-results-container h3 {
+    margin-bottom: 10px; /* 减小底部间距 */
+    font-size: 1.2em;
+    color: var(--text-color);
+}
+
+/* 图片集网格 */
+.image-grid,
+.search-results {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 15px; /* 减小间距 */
+}
+
+/* 图片集卡片 */
+.image-card {
+    background: var(--card-bg-color);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px var(--shadow-color);
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+    border: 1px solid var(--border-color);
+}
+
+.image-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px var(--shadow-color);
+    border-color: var(--primary-color);
+}
+
+.image-thumbnail-container {
+    position: relative;
+    padding-top: 75%; /* 4:3比例 */
+    background: #000;
+}
+
+.image-thumbnail {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.image-info {
+    padding: 15px;
+}
+
+.image-title {
+    font-size: 1em;
+    margin-bottom: 5px;
+    color: var(--text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.image-count {
+    font-size: 0.85em;
+    color: var(--text-color);
+    opacity: 0.8;
+    display: flex;
+    align-items: center;
+}
+
+.image-count i {
+    margin-right: 5px;
+}
+
+/* 分页控件 */
+.pagination-container {
+    background: var(--card-bg-color);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 16px var(--shadow-color);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 20px; /* 添加上边距，避免与内容贴合 */
+}
+
+.pagination-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    gap: 15px;
+}
+
+.page-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 5px;
+    scrollbar-width: thin;
+    -ms-overflow-style: none;
+    min-height: 45px;
+}
+
+.page-navigation::-webkit-scrollbar {
+    height: 4px;
+}
+
+.page-navigation::-webkit-scrollbar-thumb {
+    background: var(--primary-color);
+    border-radius: 4px;
+}
+
+.page-numbers {
+    display: flex;
+    margin: 0 10px;
+    gap: 5px;
+    flex-wrap: nowrap;
+}
+
+.page-btn,
+.page-number {
+    padding: 0;
+    border: none;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+    color: var(--text-color);
+    min-width: 40px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+#prevPage, #nextPage {
+    padding: 0 15px;
+    min-width: 80px;
+    height: 36px;
+    flex-shrink: 0;
+}
+
+.page-btn:hover:not(:disabled),
+.page-number:hover:not(.active) {
+    background: var(--primary-color);
+    color: white;
+}
+
+.page-btn.active,
+.page-number.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+    display: flex;
+    align-items: center;
+    padding: 0 5px;
+    color: var(--text-color);
+    opacity: 0.7;
+}
+
+/* 页码跳转 */
+.page-jump {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    white-space: nowrap;
+}
+
+.page-jump span {
+    color: var(--text-color);
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+#pageInput {
+    width: 60px;
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-color);
+    font-size: 14px;
+    text-align: center;
+}
+
+#pageInput:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+#jumpButton {
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+#jumpButton:hover {
+    background: var(--primary-color);
+    opacity: 0.9;
+}
+
+.pagination-info {
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 0.9em;
+    text-align: center;
+}
+
+
+
+/* 加载信息 */
+.loading-message {
+    text-align: center;
+    padding: 40px;
+    font-size: 1.2em;
+    color: var(--text-color);
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px;
+    font-size: 1.2em;
+    color: var(--secondary-color);
+}
+
+/* 响应式设计 */
+@media (max-width: 1200px) {
+    .image-grid,
+    .search-results {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px; /* 减小间距 */
+    }
+}
+
+@media (max-width: 992px) {
+    .image-grid,
+    .search-results {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px; /* 减小间距 */
+    }
+}
+
+@media (max-width: 768px) {
+    .image-container {
+        padding: 80px 10px 10px; /* 保持顶部边距足够，防止导航栏覆盖内容 */
+    }
+    
+    .image-grid,
+    .search-results {
+        grid-template-columns: repeat(3, 1fr); /* 确保手机端每行3个 */
+        gap: 8px; /* 减小间距 */
+    }
+    
+    .search-box {
+        flex-direction: row; /* 确保一直是行布局 */
+        border-radius: 8px;
+        max-width: 100%;
+    }
+    
+    .search-box input {
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+    
+    .search-box button {
+        padding: 0 15px;
+        font-size: 14px;
+        min-width: 80px;
+    }
+    
+    .pagination-controls {
+        padding-bottom: 5px;
+        justify-content: center;
+    }
+    
+    .page-btn,
+    .page-number {
+        min-width: 32px;
+        height: 32px;
+        font-size: 12px;
+    }
+
+    #prevPage, #nextPage {
+        min-width: 60px;
+        font-size: 12px;
+        padding: 0 10px;
+    }
+
+    .page-jump {
+        gap: 5px;
+    }
+
+    #pageInput {
+        width: 50px;
+        padding: 6px;
+        font-size: 13px;
+    }
+
+    #jumpButton {
+        padding: 6px 10px;
+        font-size: 13px;
+    }
+
+    .pagination-container {
+        padding: 12px 8px;
+    }
+    
+    .page-jump {
+        padding-top: 8px;
+    }
+}
+
+@media (max-width: 576px) {
+    .image-grid,
+    .search-results {
+        grid-template-columns: repeat(3, 1fr); /* 保持每行3个 */
+        gap: 6px; /* 进一步减小间距 */
+    }
+    
+    .image-title {
+        font-size: 0.9em; /* 减小字体大小 */
+    }
+    
+    .image-count {
+        font-size: 0.75em; /* 减小字体大小 */
+    }
+    
+    .pagination-controls {
+        gap: 10px;
+    }
+
+    .page-navigation {
+        padding-bottom: 5px;
+    }
+
+    .page-numbers {
+        margin: 0 5px;
+    }
+
+    .page-btn,
+    .page-number {
+        min-width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+
+    #prevPage, #nextPage {
+        min-width: 50px;
+        font-size: 11px;
+        padding: 0 8px;
+        height: 28px;
+    }
+
+    .page-jump span {
+        font-size: 12px;
+    }
+
+    #pageInput {
+        width: 40px;
+        padding: 5px;
+        font-size: 12px;
+    }
+
+    #jumpButton {
+        padding: 5px 8px;
+        font-size: 12px;
+    }
+
+    .image-container {
+        padding-top: 80px; /* 确保在小尺寸屏幕上导航栏不会覆盖内容 */
+    }
+}
+
+@media (max-width: 390px) {
+    .image-grid,
+    .search-results {
+        grid-template-columns: repeat(3, 1fr); /* 即使在最小屏幕也保持每行3个 */
+        gap: 4px; /* 极小的间距 */
+    }
+    
+    .image-card {
+        border-radius: 4px; /* 减小圆角 */
+    }
+    
+    .image-info {
+        padding: 8px; /* 减小内边距 */
+    }
+    
+    .image-title {
+        font-size: 0.8em; /* 更小的字体 */
+        margin-bottom: 2px;
+    }
+    
+    .image-count {
+        font-size: 0.7em; /* 更小的字体 */
+    }
+    
+    .search-box button {
+        padding: 0 10px;
+        font-size: 12px;
+        min-width: 60px;
+    }
+
+    .pagination-controls {
+        gap: 8px;
+    }
+
+    .page-jump {
+        width: 100%;
+        justify-content: center;
+        padding-top: 8px;
+    }
+
+    .image-container {
+        padding-top: 55px; /* 确保在最小屏幕上导航栏不会覆盖内容 */
+    }
+}

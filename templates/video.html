@@ -1,0 +1,121 @@
+<!-- templates/video.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>留影阁</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='icons/favicon.ico') }}">
+    <link rel="stylesheet" href="/static/css/video.css">
+    <link rel="stylesheet" href="/static/css/navbar.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="video-container">
+        <!-- 导入通用导航栏 -->
+        {% include 'common/navbar.html' %}
+        
+        <!-- 大窗视频播放器（初始隐藏） -->
+        <div class="video-player-container main-player hidden" id="mainPlayer">
+            <div class="video-player">
+                <video id="mainVideoPlayer" controls>
+                    <source src="" type="video/mp4">
+                    您的浏览器不支持视频播放。
+                </video>
+            </div>
+            <div class="video-info-panel">
+                <h2>请选择视频</h2>
+                <p>点击下方视频卡片开始播放</p>
+            </div>
+        </div>
+
+        <!-- 小窗视频播放器（初始隐藏） -->
+        <div class="video-player-container pip-player hidden" id="pipPlayer">
+            <div class="video-player">
+                <video id="pipVideoPlayer" controls>
+                    <source src="" type="video/mp4">
+                    您的浏览器不支持视频播放。
+                </video>
+            </div>
+            <div class="video-info-panel">
+                <h2>小窗播放</h2>
+                <p>点击关闭按钮退出小窗</p>
+            </div>
+            <button class="pip-close" id="pipCloseBtn">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- 搜索和分类区域 -->
+        <div class="search-category-container">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="搜索视频...">
+                <button id="searchButton">
+                    <i class="fas fa-search"></i>
+                    搜索
+                </button>
+            </div>
+
+            <div class="video-categories">
+                <div class="category-header">
+                    <span>视频分类</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="categories-list">
+                    <!-- 分类将通过JavaScript动态加载 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 视频网格 -->
+        <div class="video-grid-container">
+            <div class="video-grid">
+                <!-- 视频卡片将通过JavaScript动态加载 -->
+            </div>
+        </div>
+
+        <!-- 搜索结果容器 -->
+        <div class="search-results-container" style="display: none;">
+            <h3>搜索结果</h3>
+            <div class="search-results">
+                <!-- 搜索结果将通过JavaScript动态加载 -->
+            </div>
+        </div>
+
+        <!-- 分页控件 -->
+        <div class="pagination-container">
+            <div class="pagination-controls">
+                <div class="page-navigation">
+                    <button id="prevPage" onclick="prevPage()">上一页</button>
+                    <div class="page-numbers"></div>
+                    <button id="nextPage" onclick="nextPage()">下一页</button>
+                </div>
+                <div class="page-jump">
+                    <span>跳至</span>
+                    <input type="number" id="pageInput" min="1" placeholder="页码">
+                    <button id="jumpButton">跳转</button>
+                </div>
+            </div>
+            <div class="pagination-info"></div>
+        </div>
+    </div>
+
+    <script src="/static/js/navbar.js"></script>
+    <script src="/static/js/video.js"></script>
+    <script>
+        // 初始化UI
+        document.addEventListener('DOMContentLoaded', () => {
+            // 分类折叠功能
+            const categoryHeader = document.querySelector('.category-header');
+            const categoriesList = document.querySelector('.categories-list');
+            
+            if (categoryHeader && categoriesList) {
+                categoryHeader.addEventListener('click', () => {
+                    categoryHeader.classList.toggle('collapsed');
+                    categoriesList.classList.toggle('collapsed');
+                });
+            }
+        });
+    </script>
+</body>
+</html>

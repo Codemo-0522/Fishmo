@@ -1,0 +1,191 @@
+/* static/css/show_image.css */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #000;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    overflow-x: hidden;
+}
+
+.images-container {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.image-item {
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-item img {
+    /* 响应式设计 */
+    max-width: 100%;
+    max-height: 100vh;
+    height: auto;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+/* 媒体查询 - 手机端 */
+@media (max-width: 767px) {
+    .image-item img {
+        width: 100%;
+        height: auto;
+    }
+}
+
+/* 媒体查询 - 平板端 */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .image-item img {
+        max-width: 100%;
+        max-height: 90vh;
+        object-fit: contain;
+    }
+}
+
+/* 媒体查询 - 电脑端 */
+@media (min-width: 1024px) {
+    .image-item img {
+        max-width: 100%;
+        max-height: 90vh;
+        object-fit: contain;
+    }
+}
+
+.loading-message, .error-message {
+    width: 100%;
+    padding: 20px;
+    text-align: center;
+    color: #fff;
+}
+
+.error-message {
+    color: #ff6b6b;
+}
+
+/* 分页导航 */
+.pagination {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 10px;
+}
+
+.pagination-button {
+    background-color: #333;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    margin: 0 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.pagination-button:hover {
+    background-color: #555;
+}
+
+.pagination-button:disabled {
+    background-color: #222;
+    color: #666;
+    cursor: not-allowed;
+}
+
+/* 子集列表 */
+.subset-container {
+    width: 100%;
+    padding: 20px;
+    background-color: #111;
+}
+
+.subset-title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+}
+
+.subset-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 15px;
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+/* 为手机端设置子集显示，确保每行至少3个 */
+@media (max-width: 767px) {
+    .subset-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    
+    .subset-item img {
+        height: 120px;
+    }
+    
+    .subset-info {
+        font-size: 12px;
+        padding: 3px;
+    }
+}
+
+/* 平板端子集显示 */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .subset-grid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+    
+    .subset-item img {
+        height: 150px;
+    }
+}
+
+.subset-item {
+    cursor: pointer;
+    transition: transform 0.3s;
+    position: relative;
+}
+
+.subset-item:hover {
+    transform: scale(1.05);
+}
+
+.subset-item img {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+    border-radius: 5px;
+}
+
+.subset-info {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 5px;
+    text-align: center;
+    border-bottom-left-radius: 5px;
+    border-bottom-right-radius: 5px;
+}
+
+.page-info {
+    text-align: center;
+    margin: 10px 0;
+    font-size: 14px;
+}
